@@ -1,1711 +1,2088 @@
 <!DOCTYPE html>
+
 <html lang="pt-br">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Monitoramento de Impressoras</title>
+```
+<title>Monitoramento de Impressoras</title>
 
-    <style>
+<style>
 
-        * {
-            box-sizing: border-box;
+    * {
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        min-height: 100%;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4f6f8;
+        color: #1f2937;
+    }
+
+    body {
+        overflow-x: hidden;
+    }
+
+    /* =========================================================
+       CABEÇALHO
+    ========================================================= */
+
+    .cabecalho {
+        width: 100%;
+        background: #ffffff;
+        border-bottom: 1px solid #dfe3e8;
+        padding: 14px 22px 12px 22px;
+        position: relative;
+    }
+
+    .topo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .titulo-area {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .titulo {
+        margin: 0;
+        font-size: 25px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .subtitulo {
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    .informacoes-sistema {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        font-size: 12px;
+        color: #6b7280;
+    }
+
+    .sistema-header {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 600;
+    }
+
+    .ponto-ativo {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #16a34a;
+        display: inline-block;
+    }
+
+    .ponto-inativo {
+        background: #dc2626;
+    }
+
+    .relogio {
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .ultima-atualizacao {
+        color: #6b7280;
+    }
+
+    .contador-atualizacao {
+        font-weight: 600;
+        color: #374151;
+        white-space: nowrap;
+    }
+
+    .contador-atualizacao.atualizando {
+        color: #2563eb;
+    }
+
+    /* =========================================================
+       NAVEGAÇÃO
+    ========================================================= */
+
+    .navegacao {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+    }
+
+    .botao-nav {
+        border: 1px solid #d1d5db;
+        background: #f9fafb;
+        color: #374151;
+        padding: 8px 16px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .botao-nav:hover {
+        background: #eef2f7;
+    }
+
+    .botao-nav.ativo {
+        background: #1f2937;
+        color: #ffffff;
+        border-color: #1f2937;
+    }
+
+    /* =========================================================
+       CONTEÚDO
+    ========================================================= */
+
+    .conteudo {
+        padding: 14px 20px 25px 20px;
+    }
+
+    .aba {
+        display: none;
+    }
+
+    .aba.ativa {
+        display: block;
+    }
+
+    /* =========================================================
+       CONTADORES
+    ========================================================= */
+
+    .resumo {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 13px;
+    }
+
+    .contador {
+        border: 1px solid #d9dee5;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .contador:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.07);
+    }
+
+    .contador-titulo {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 700;
+    }
+
+    .contador-numero {
+        margin-top: 3px;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    .contador-total .contador-numero {
+        color: #374151;
+    }
+
+    .contador-online .contador-numero {
+        color: #15803d;
+    }
+
+    .contador-offline .contador-numero {
+        color: #6b7280;
+    }
+
+    .contador-atencao .contador-numero {
+        color: #ca8a04;
+    }
+
+    .contador-critico .contador-numero {
+        color: #dc2626;
+    }
+
+    /* =========================================================
+       ÁREA DAS IMPRESSORAS
+    ========================================================= */
+
+    .painel-impressoras {
+        background: #ffffff;
+        border: 1px solid #d9dee5;
+        border-radius: 9px;
+        padding: 12px;
+    }
+
+    .painel-titulo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+
+    .painel-titulo h2 {
+        margin: 0;
+        font-size: 15px;
+        color: #111827;
+    }
+
+    .contador-grid-info {
+        font-size: 11px;
+        color: #6b7280;
+    }
+
+    /* =========================================================
+       GRID DE IMPRESSORAS
+    ========================================================= */
+
+    .grid-impressoras {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .impressora {
+        min-height: 62px;
+        border-radius: 7px;
+        padding: 9px 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        transition: 0.18s;
+        overflow: hidden;
+    }
+
+    .impressora:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .impressora-nome {
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .impressora-local {
+        margin-top: 3px;
+        font-size: 9px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        opacity: 0.75;
+    }
+
+    .impressora.normal {
+        background: #ecfdf3;
+        border-color: #bbf7d0;
+        color: #166534;
+    }
+
+    .impressora.atencao {
+        background: #fffbeb;
+        border-color: #fde68a;
+        color: #92400e;
+    }
+
+    .impressora.critico {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #991b1b;
+    }
+
+    .impressora.offline {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+        color: #4b5563;
+    }
+
+    /* =========================================================
+       MODAL
+    ========================================================= */
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.62);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .modal.ativo {
+        display: flex;
+    }
+
+    .modal-conteudo {
+        width: min(850px, 95vw);
+        max-height: 90vh;
+        overflow-y: auto;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-cabecalho {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 17px 20px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-cabecalho h2 {
+        margin: 0;
+        font-size: 19px;
+    }
+
+    .fechar {
+        border: 0;
+        background: transparent;
+        font-size: 26px;
+        color: #6b7280;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .modal-corpo {
+        padding: 20px;
+    }
+
+    .detalhes-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .detalhe {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        padding: 10px;
+    }
+
+    .detalhe-label {
+        display: block;
+        font-size: 10px;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+
+    .detalhe-valor {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1f2937;
+        word-break: break-word;
+    }
+
+    .secao-modal {
+        margin-top: 18px;
+    }
+
+    .secao-modal h3 {
+        font-size: 14px;
+        margin: 0 0 10px 0;
+        color: #111827;
+    }
+
+    .suprimentos {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .suprimento {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 7px;
+        padding: 9px;
+    }
+
+    .suprimento-topo {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        margin-bottom: 6px;
+    }
+
+    .barra-suprimento {
+        width: 100%;
+        height: 9px;
+        background: #e5e7eb;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .barra-preenchimento {
+        height: 100%;
+        border-radius: 20px;
+        transition: width 0.3s;
+    }
+
+    .barra-normal {
+        background: #22c55e;
+    }
+
+    .barra-atencao {
+        background: #eab308;
+    }
+
+    .barra-critico {
+        background: #ef4444;
+    }
+
+    .sem-suprimentos {
+        color: #6b7280;
+        font-size: 12px;
+        padding: 12px;
+        background: #f8fafc;
+        border-radius: 7px;
+    }
+
+    .botao-acesso {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 9px 15px;
+        background: #1f2937;
+        color: white;
+        border-radius: 7px;
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .botao-acesso:hover {
+        background: #111827;
+    }
+
+    /* =========================================================
+       TELA DE ANÁLISE
+    ========================================================= */
+
+    .cabecalho-analise {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+
+    .cabecalho-analise h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #111827;
+    }
+
+    .cabecalho-analise p {
+        margin: 4px 0 0 0;
+        color: #6b7280;
+        font-size: 12px;
+    }
+
+    .indicadores-analise {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .indicador {
+        background: #ffffff;
+        border: 1px solid #d9dee5;
+        border-radius: 9px;
+        padding: 13px;
+    }
+
+    .indicador-titulo {
+        font-size: 10px;
+        color: #6b7280;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .indicador-valor {
+        font-size: 22px;
+        font-weight: 700;
+        margin-top: 5px;
+        color: #111827;
+    }
+
+    .indicador-legenda {
+        margin-top: 3px;
+        font-size: 10px;
+        color: #9ca3af;
+    }
+
+    .painel-analise {
+        background: #ffffff;
+        border: 1px solid #d9dee5;
+        border-radius: 9px;
+        padding: 14px;
+    }
+
+    .painel-analise h3 {
+        margin: 0 0 12px 0;
+        font-size: 14px;
+        color: #111827;
+    }
+
+    .grade-analise {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    /* =========================================================
+       BARRAS DE ANÁLISE
+    ========================================================= */
+
+    .lista-barras {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .item-barra {
+        display: grid;
+        grid-template-columns: 150px 1fr 55px;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .item-barra-nome {
+        font-size: 11px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .item-barra-fundo {
+        height: 11px;
+        background: #e5e7eb;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .item-barra-preenchimento {
+        height: 100%;
+        border-radius: 20px;
+        background: #374151;
+    }
+
+    .item-barra-valor {
+        text-align: right;
+        font-size: 11px;
+        font-weight: 700;
+        color: #374151;
+    }
+
+    /* =========================================================
+       TABELA
+    ========================================================= */
+
+    .tabela-container {
+        overflow-x: auto;
+    }
+
+    .tabela {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+    }
+
+    .tabela th {
+        text-align: left;
+        background: #f8fafc;
+        color: #6b7280;
+        font-size: 10px;
+        text-transform: uppercase;
+        padding: 9px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .tabela td {
+        padding: 9px;
+        border-bottom: 1px solid #eef0f2;
+        color: #374151;
+    }
+
+    .tabela tr:hover td {
+        background: #fafafa;
+    }
+
+    .badge-consumo {
+        display: inline-block;
+        padding: 4px 7px;
+        border-radius: 5px;
+        background: #f3f4f6;
+        font-weight: 700;
+    }
+
+    /* =========================================================
+       EVOLUÇÃO
+    ========================================================= */
+
+    .evolucao {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .evolucao-item {
+        display: grid;
+        grid-template-columns: 90px 1fr 60px;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .evolucao-data {
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .evolucao-barra {
+        height: 13px;
+        background: #e5e7eb;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .evolucao-preenchimento {
+        height: 100%;
+        background: #4b5563;
+        border-radius: 20px;
+    }
+
+    .evolucao-valor {
+        text-align: right;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    /* =========================================================
+       ESTADO VAZIO
+    ========================================================= */
+
+    .estado-vazio {
+        padding: 30px;
+        text-align: center;
+        color: #6b7280;
+        font-size: 12px;
+        background: #f8fafc;
+        border-radius: 7px;
+    }
+
+    /* =========================================================
+       RODAPÉ
+    ========================================================= */
+
+    .rodape {
+        margin-top: 12px;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 10px;
+    }
+
+    /* =========================================================
+       RESPONSIVIDADE
+    ========================================================= */
+
+    @media (max-width: 1300px) {
+
+        .grid-impressoras {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
         }
 
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #eef1f5;
-            color: #1f2937;
+        .indicadores-analise {
+            grid-template-columns: repeat(3, 1fr);
         }
+    }
 
-        body {
-            overflow: hidden;
-        }
+    @media (max-width: 900px) {
 
-        /* =====================================================
-           CABEÇALHO
-        ===================================================== */
-
-        header {
-            height: 90px;
-            background: #1f2937;
-            color: white;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            padding: 0 30px;
-        }
-
-        /* =====================================================
-           SISTEMA ATIVO
-        ===================================================== */
-
-        .sistema-header {
-            position: absolute;
-            left: 25px;
-            top: 16px;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #86efac;
-        }
-
-        .ponto-ativo {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
-            animation: pulsar 1.8s infinite;
-        }
-
-        @keyframes pulsar {
-
-            0% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.55;
-                transform: scale(0.85);
-            }
-
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-        }
-
-        /* =====================================================
-           TÍTULO
-        ===================================================== */
-
-        .titulo {
-            text-align: center;
-        }
-
-        .titulo h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .titulo p {
-            margin: 6px 0 0;
-            color: #d1d5db;
-            font-size: 13px;
-        }
-
-        /* =====================================================
-           RELÓGIO
-        ===================================================== */
-
-        .relogio {
-            position: absolute;
-            right: 25px;
-            top: 10px;
-            text-align: right;
-        }
-
-        .hora {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .atualizacao {
-            margin-top: 5px;
-            font-size: 10px;
-            color: #d1d5db;
-        }
-
-        .atualizacao strong {
-            color: white;
-        }
-
-        /* =====================================================
-           CONTAINER
-        ===================================================== */
-
-        .container {
-            height: calc(100vh - 90px);
-            padding: 18px 25px;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-        }
-
-        /* =====================================================
-           INDICADORES
-        ===================================================== */
-
-        .indicadores {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 15px;
-            flex-shrink: 0;
-        }
-
-        .indicador {
-            border: none;
-            border-radius: 12px;
-            background: white;
-            min-height: 68px;
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            transition:
-                transform 0.2s ease,
-                box-shadow 0.2s ease,
-                background 0.2s ease;
-            font-family: inherit;
-        }
-
-        .indicador:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 14px rgba(0, 0, 0, 0.13);
-        }
-
-        .indicador.ativo {
-            transform: translateY(-2px);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-        }
-
-        .indicador-texto {
-            font-size: 12px;
-            font-weight: bold;
-            color: #6b7280;
-        }
-
-        .indicador-numero {
-            font-size: 27px;
-            font-weight: bold;
-        }
-
-        .total {
-            border-left: 5px solid #374151;
-        }
-
-        .online {
-            border-left: 5px solid #16a34a;
-        }
-
-        .offline {
-            border-left: 5px solid #dc2626;
-        }
-
-        .atencao {
-            border-left: 5px solid #eab308;
-        }
-
-        .critico {
-            border-left: 5px solid #b91c1c;
-        }
-
-        /* =====================================================
-           SIRENE
-        ===================================================== */
-
-        .sirene {
-            display: inline-block;
-            margin-right: 4px;
-            animation: sireneAnimacao 1.2s infinite;
-        }
-
-        @keyframes sireneAnimacao {
-
-            0%,
-            100% {
-                transform: rotate(0deg);
-            }
-
-            10% {
-                transform: rotate(-10deg);
-            }
-
-            20% {
-                transform: rotate(10deg);
-            }
-
-            30% {
-                transform: rotate(-10deg);
-            }
-
-            40% {
-                transform: rotate(0deg);
-            }
-
-        }
-
-        /* =====================================================
-           PAINEL
-        ===================================================== */
-
-        .painel {
-            flex: 1;
-            min-height: 0;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .painel-cabecalho {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            flex-shrink: 0;
-        }
-
-        .painel-cabecalho h2 {
-            margin: 0;
-            font-size: 18px;
-        }
-
-        .informacao-filtro {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: bold;
-        }
-
-        /* =====================================================
-           LISTA
-        ===================================================== */
-
-        .lista-impressoras {
-            flex: 1;
-            min-height: 0;
-            overflow-y: auto;
-            display: grid;
+        .grid-impressoras {
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            grid-auto-rows: minmax(155px, auto);
-            gap: 12px;
-            padding: 3px;
         }
 
-        .lista-impressoras::-webkit-scrollbar {
-            width: 7px;
+        .resumo {
+            grid-template-columns: repeat(3, 1fr);
         }
 
-        .lista-impressoras::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
+        .grade-analise {
+            grid-template-columns: 1fr;
         }
 
-        .lista-impressoras::-webkit-scrollbar-thumb {
-            background: #c7cbd1;
-            border-radius: 10px;
-        }
-
-        /* =====================================================
-           CARD
-        ===================================================== */
-
-        .impressora {
-            position: relative;
-            background: #fafafa;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 12px;
-            min-width: 0;
-            min-height: 0;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            transition:
-                transform 0.2s ease,
-                box-shadow 0.2s ease,
-                border-color 0.2s ease;
-        }
-
-        .impressora:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 14px rgba(0, 0, 0, 0.12);
-            border-color: #9ca3af;
-        }
-
-        .impressora.critico-card {
-            border: 2px solid #dc2626;
-            background: #fff7f7;
-        }
-
-        .impressora.atencao-card {
-            border: 2px solid #eab308;
-            background: #fffdf5;
-        }
-
-        .impressora.offline-card {
-            border: 2px solid #ef4444;
-        }
-
-        /* =====================================================
-           CABEÇALHO CARD
-        ===================================================== */
-
-        .cabecalho-impressora {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            margin-bottom: 5px;
-            min-width: 0;
-        }
-
-        .nome-impressora {
-            font-size: 13px;
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            min-width: 0;
-        }
-
-        .bolinha {
-            width: 11px;
-            height: 11px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .bolinha.online {
-            background: #16a34a;
-            box-shadow: 0 0 7px rgba(22, 163, 74, 0.6);
-        }
-
-        .bolinha.offline {
-            background: #dc2626;
-            box-shadow: 0 0 7px rgba(220, 38, 38, 0.6);
-        }
-
-        .modelo {
-            font-size: 10px;
-            color: #6b7280;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            margin-bottom: 3px;
-        }
-
-        .ip {
-            font-size: 10px;
-            color: #9ca3af;
-            margin-bottom: 7px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* =====================================================
-           STATUS
-        ===================================================== */
-
-        .status-impressora {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 7px;
-        }
-
-        .status-label {
-            font-size: 9px;
-            font-weight: bold;
-        }
-
-        .status-online {
-            color: #15803d;
-        }
-
-        .status-offline {
-            color: #b91c1c;
-        }
-
-        .status-normal {
-            color: #15803d;
-        }
-
-        .status-atencao {
-            color: #a16207;
-        }
-
-        .status-critico {
-            color: #b91c1c;
-        }
-
-        /* =====================================================
-           SUPRIMENTOS
-        ===================================================== */
-
-        .suprimentos {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            margin-top: auto;
-        }
-
-        .suprimento {
-            width: 100%;
-        }
-
-        .suprimento-topo {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 8px;
-            margin-bottom: 2px;
-        }
-
-        .barra {
-            width: 100%;
-            height: 6px;
-            background: #e5e7eb;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .preenchimento {
-            height: 100%;
-            border-radius: 5px;
-            transition: width 0.4s ease;
-        }
-
-        .barra-preto {
-            background: #374151;
-        }
-
-        .barra-ciano {
-            background: #0891b2;
-        }
-
-        .barra-magenta {
-            background: #c026d3;
-        }
-
-        .barra-amarelo {
-            background: #eab308;
-        }
-
-        .barra-unidade {
-            background: #4f46e5;
-        }
-
-        /* =====================================================
-           SEM RESULTADOS
-        ===================================================== */
-
-        .sem-resultados {
-            grid-column: 1 / -1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6b7280;
-            font-size: 14px;
-            min-height: 150px;
-        }
-
-        /* =====================================================
-           RODAPÉ
-        ===================================================== */
-
-        .rodape {
-            height: 28px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 0 5px;
-            font-size: 10px;
-            color: #6b7280;
-        }
-
-        /* =====================================================
-           MODAL
-        ===================================================== */
-
-        .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.68);
+        .informacoes-sistema {
             display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
         }
+    }
 
-        .modal.aberto {
-            display: flex;
-        }
+    @media (max-width: 600px) {
 
-        .modal-conteudo {
-            width: min(760px, 95vw);
-            max-height: 90vh;
-            overflow-y: auto;
-            background: white;
-            border-radius: 14px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-            animation: aparecer 0.2s ease;
-        }
-
-        @keyframes aparecer {
-
-            from {
-                opacity: 0;
-                transform: translateY(15px) scale(0.98);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-
-        }
-
-        /* =====================================================
-           CABEÇALHO MODAL
-        ===================================================== */
-
-        .modal-cabecalho {
-            background: #1f2937;
-            color: white;
-            padding: 18px 22px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-        }
-
-        .modal-titulo-area {
-            min-width: 0;
-        }
-
-        .modal-cabecalho h2 {
-            margin: 0;
-            font-size: 20px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .modal-subtitulo {
-            margin-top: 4px;
-            font-size: 11px;
-            color: #d1d5db;
-        }
-
-        .fechar {
-            width: 34px;
-            height: 34px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
-            color: white;
-            font-size: 22px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .fechar:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-        /* =====================================================
-           CORPO MODAL
-        ===================================================== */
-
-        .modal-corpo {
-            padding: 22px;
-        }
-
-        .titulo-relatorio {
-            margin: 0 0 12px;
-            font-size: 15px;
-            color: #1f2937;
-        }
-
-        .detalhes-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .detalhe {
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+        .cabecalho {
             padding: 12px;
-            min-width: 0;
         }
 
-        .detalhe-label {
-            display: block;
-            font-size: 10px;
-            color: #6b7280;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .detalhe-valor {
-            font-size: 13px;
-            font-weight: bold;
-            word-break: break-word;
-        }
-
-        /* =====================================================
-           STATUS RELATÓRIO
-        ===================================================== */
-
-        .status-relatorio {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .status-box {
-            border-radius: 9px;
-            padding: 13px;
-            border: 1px solid #e5e7eb;
-            background: #f8fafc;
-        }
-
-        .status-box-label {
-            font-size: 10px;
-            color: #6b7280;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .status-box-valor {
-            font-size: 15px;
-            font-weight: bold;
-        }
-
-        /* =====================================================
-           SEÇÕES
-        ===================================================== */
-
-        .secao-modal {
-            margin-top: 20px;
-        }
-
-        .secao-modal h3 {
-            margin: 0 0 10px;
-            font-size: 15px;
-        }
-
-        /* =====================================================
-           SUPRIMENTOS MODAL
-        ===================================================== */
-
-        .suprimentos-modal {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 10px;
-        }
-
-        .suprimento-modal {
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+        .conteudo {
             padding: 10px;
         }
 
-        .suprimento-modal-topo {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            margin-bottom: 5px;
+        .topo {
+            align-items: flex-start;
         }
 
-        /* =====================================================
-           RESPONSIVO
-        ===================================================== */
-
-        @media (max-width: 1300px) {
-
-            .lista-impressoras {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-
-            .indicador-numero {
-                font-size: 23px;
-            }
-
+        .titulo {
+            font-size: 20px;
         }
 
-        @media (max-width: 900px) {
-
-            body {
-                overflow: auto;
-            }
-
-            header {
-                height: 90px;
-            }
-
-            .sistema-header {
-                left: 15px;
-                top: 10px;
-            }
-
-            .relogio {
-                right: 15px;
-                top: 10px;
-            }
-
-            .hora {
-                font-size: 20px;
-            }
-
-            .titulo h1 {
-                font-size: 22px;
-            }
-
-            .titulo p {
-                font-size: 11px;
-            }
-
-            .container {
-                height: auto;
-                min-height: calc(100vh - 90px);
-            }
-
-            .indicadores {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .lista-impressoras {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-
-            .detalhes-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .status-relatorio {
-                grid-template-columns: 1fr;
-            }
-
-            .suprimentos-modal {
-                grid-template-columns: 1fr;
-            }
-
+        .grid-impressoras {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
-        @media (max-width: 600px) {
-
-            .container {
-                padding: 12px;
-            }
-
-            header {
-                height: 105px;
-            }
-
-            .titulo {
-                margin-top: 22px;
-            }
-
-            .titulo h1 {
-                font-size: 20px;
-            }
-
-            .titulo p {
-                font-size: 10px;
-            }
-
-            .relogio {
-                top: 8px;
-            }
-
-            .hora {
-                font-size: 17px;
-            }
-
-            .atualizacao {
-                font-size: 9px;
-            }
-
-            .sistema-header {
-                top: auto;
-                bottom: 8px;
-                font-size: 9px;
-            }
-
-            .indicadores {
-                grid-template-columns: 1fr;
-            }
-
-            .lista-impressoras {
-                grid-template-columns: 1fr;
-            }
-
-            .rodape {
-                height: auto;
-                padding: 8px 0;
-            }
-
+        .resumo {
+            grid-template-columns: repeat(2, 1fr);
         }
 
-    </style>
+        .indicadores-analise {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .detalhes-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .suprimentos {
+            grid-template-columns: 1fr;
+        }
+
+        .item-barra {
+            grid-template-columns: 100px 1fr 50px;
+        }
+    }
+
+</style>
+```
 
 </head>
 
 <body>
 
-    <!-- =====================================================
-         CABEÇALHO
-    ====================================================== -->
+```
+<header class="cabecalho">
 
-    <header>
+    <div class="topo">
 
-        <div class="sistema-header">
+        <div class="titulo-area">
 
-            <span class="ponto-ativo"></span>
-
-            <span>
-                Sistema de monitoramento ativo
-            </span>
-
-        </div>
-
-        <div class="titulo">
-
-            <h1>
-                🖨️ Monitoramento de Impressoras
+            <h1 class="titulo">
+                Monitoramento de Impressoras
             </h1>
 
-            <p>
+            <div class="subtitulo">
                 Sistema de monitoramento e manutenção preventiva
-            </p>
-
-        </div>
-
-        <div class="relogio">
-
-            <div class="hora" id="hora">
-                --:--:--
-            </div>
-
-            <div class="atualizacao">
-
-                Próxima atualização:
-
-                <strong id="contadorAtualizacao">
-                    01:00
-                </strong>
-
             </div>
 
         </div>
 
-    </header>
 
-    <!-- =====================================================
-         CONTEÚDO
-    ====================================================== -->
+        <div class="informacoes-sistema">
 
-    <main class="container">
+            <div class="sistema-header">
 
-        <!-- INDICADORES -->
+                <span
+                    class="ponto-ativo"
+                    id="pontoSistema">
+                </span>
 
-        <section class="indicadores">
-
-            <button
-                class="indicador total ativo"
-                data-filtro="todos"
-                onclick="filtrarImpressoras('todos', this)"
-            >
-
-                <div class="indicador-texto">
-                    🖨️ TOTAL
-                </div>
-
-                <div class="indicador-numero">
-                    {{ impressoras|length }}
-                </div>
-
-            </button>
-
-            <button
-                class="indicador online"
-                data-filtro="online"
-                onclick="filtrarImpressoras('online', this)"
-            >
-
-                <div class="indicador-texto">
-                    🟢 ONLINE
-                </div>
-
-                <div class="indicador-numero" id="totalOnline">
-                    {{ total_online }}
-                </div>
-
-            </button>
-
-            <button
-                class="indicador offline"
-                data-filtro="offline"
-                onclick="filtrarImpressoras('offline', this)"
-            >
-
-                <div class="indicador-texto">
-                    🔴 OFFLINE
-                </div>
-
-                <div class="indicador-numero" id="totalOffline">
-                    {{ total_offline }}
-                </div>
-
-            </button>
-
-            <button
-                class="indicador atencao"
-                data-filtro="atencao"
-                onclick="filtrarImpressoras('atencao', this)"
-            >
-
-                <div class="indicador-texto">
-                    🟡 ATENÇÃO
-                </div>
-
-                <div class="indicador-numero" id="totalAtencao">
-                    {{ total_atencao }}
-                </div>
-
-            </button>
-
-            <button
-                class="indicador critico"
-                data-filtro="critico"
-                onclick="filtrarImpressoras('critico', this)"
-            >
-
-                <div class="indicador-texto">
-
-                    <span class="sirene">
-                        🚨
-                    </span>
-
-                    CRÍTICAS
-
-                </div>
-
-                <div class="indicador-numero" id="totalCritico">
-                    {{ total_critico }}
-                </div>
-
-            </button>
-
-        </section>
-
-        <!-- PAINEL -->
-
-        <section class="painel">
-
-            <div class="painel-cabecalho">
-
-                <h2>
-                    Status das Impressoras
-                </h2>
-
-                <div
-                    class="informacao-filtro"
-                    id="informacaoFiltro"
-                >
-                    Exibindo todas as impressoras
-                </div>
-
-            </div>
-
-            <!-- LISTA -->
-
-            <div
-                class="lista-impressoras"
-                id="listaImpressoras"
-            >
-
-                {% for impressora in impressoras %}
-
-                <div
-                    class="
-                        impressora
-                        {% if impressora.status_geral == 'critico' %}
-                            critico-card
-                        {% elif impressora.status_geral == 'atencao' %}
-                            atencao-card
-                        {% endif %}
-                        {% if impressora.status_rede == 'offline' %}
-                            offline-card
-                        {% endif %}
-                    "
-                    data-rede="{{ impressora.status_rede }}"
-                    data-geral="{{ impressora.status_geral }}"
-                    data-indice="{{ loop.index0 }}"
-                    onclick="abrirDetalhes(this.dataset.indice)"
-                >
-
-                    <!-- CABEÇALHO CARD -->
-
-                    <div class="cabecalho-impressora">
-
-                        <div class="nome-impressora">
-                            🖨️ {{ impressora.local }}
-                        </div>
-
-                        {% if impressora.status_rede == "online" %}
-
-                        <div class="bolinha online"></div>
-
-                        {% else %}
-
-                        <div class="bolinha offline"></div>
-
-                        {% endif %}
-
-                    </div>
-
-                    <!-- MODELO -->
-
-                    <div class="modelo">
-                        {{ impressora.modelo }}
-                    </div>
-
-                    <!-- IP -->
-
-                    <div class="ip">
-                        IP: {{ impressora.ip }}
-                    </div>
-
-                    <!-- STATUS -->
-
-                    <div class="status-impressora">
-
-                        {% if impressora.status_rede == "online" %}
-
-                        <span class="status-label status-online">
-                            🟢 ONLINE
-                        </span>
-
-                        {% else %}
-
-                        <span class="status-label status-offline">
-                            🔴 OFFLINE
-                        </span>
-
-                        {% endif %}
-
-                        {% if impressora.status_geral == "normal" %}
-
-                        <span class="status-label status-normal">
-                            NORMAL
-                        </span>
-
-                        {% elif impressora.status_geral == "atencao" %}
-
-                        <span class="status-label status-atencao">
-                            ATENÇÃO
-                        </span>
-
-                        {% else %}
-
-                        <span class="status-label status-critico">
-                            🔴 CRÍTICO
-                        </span>
-
-                        {% endif %}
-
-                    </div>
-
-                    <!-- SUPRIMENTOS -->
-
-                    <div class="suprimentos">
-
-                        {% if impressora.suprimentos.toner_preto is defined %}
-
-                        <div class="suprimento">
-
-                            <div class="suprimento-topo">
-
-                                <span>
-                                    ⚫ Preto
-                                </span>
-
-                                <strong>
-                                    {{ impressora.suprimentos.toner_preto }}%
-                                </strong>
-
-                            </div>
-
-                            <div class="barra">
-
-                                <div
-                                    class="preenchimento barra-preto"
-                                    data-percent="{{ impressora.suprimentos.toner_preto }}"
-                                ></div>
-
-                            </div>
-
-                        </div>
-
-                        {% endif %}
-
-                        {% if impressora.suprimentos.toner_ciano is defined %}
-
-                        <div class="suprimento">
-
-                            <div class="suprimento-topo">
-
-                                <span>
-                                    🔵 Ciano
-                                </span>
-
-                                <strong>
-                                    {{ impressora.suprimentos.toner_ciano }}%
-                                </strong>
-
-                            </div>
-
-                            <div class="barra">
-
-                                <div
-                                    class="preenchimento barra-ciano"
-                                    data-percent="{{ impressora.suprimentos.toner_ciano }}"
-                                ></div>
-
-                            </div>
-
-                        </div>
-
-                        {% endif %}
-
-                        {% if impressora.suprimentos.toner_magenta is defined %}
-
-                        <div class="suprimento">
-
-                            <div class="suprimento-topo">
-
-                                <span>
-                                    🟣 Magenta
-                                </span>
-
-                                <strong>
-                                    {{ impressora.suprimentos.toner_magenta }}%
-                                </strong>
-
-                            </div>
-
-                            <div class="barra">
-
-                                <div
-                                    class="preenchimento barra-magenta"
-                                    data-percent="{{ impressora.suprimentos.toner_magenta }}"
-                                ></div>
-
-                            </div>
-
-                        </div>
-
-                        {% endif %}
-
-                        {% if impressora.suprimentos.toner_amarelo is defined %}
-
-                        <div class="suprimento">
-
-                            <div class="suprimento-topo">
-
-                                <span>
-                                    🟡 Amarelo
-                                </span>
-
-                                <strong>
-                                    {{ impressora.suprimentos.toner_amarelo }}%
-                                </strong>
-
-                            </div>
-
-                            <div class="barra">
-
-                                <div
-                                    class="preenchimento barra-amarelo"
-                                    data-percent="{{ impressora.suprimentos.toner_amarelo }}"
-                                ></div>
-
-                            </div>
-
-                        </div>
-
-                        {% endif %}
-
-                        {% if impressora.suprimentos.unidade_imagem is defined %}
-
-                        <div class="suprimento">
-
-                            <div class="suprimento-topo">
-
-                                <span>
-                                    📷 Unidade
-                                </span>
-
-                                <strong>
-                                    {{ impressora.suprimentos.unidade_imagem }}%
-                                </strong>
-
-                            </div>
-
-                            <div class="barra">
-
-                                <div
-                                    class="preenchimento barra-unidade"
-                                    data-percent="{{ impressora.suprimentos.unidade_imagem }}"
-                                ></div>
-
-                            </div>
-
-                        </div>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-                {% endfor %}
-
-            </div>
-
-            <!-- RODAPÉ -->
-
-            <div class="rodape">
-
-                <span>
-
-                    Impressoras exibidas:
-
-                    <strong id="contadorImpressoras">
-                        {{ impressoras|length }}
-                    </strong>
-
+                <span id="textoSistema">
+                    Sistema atualizado
                 </span>
 
             </div>
 
-        </section>
 
-    </main>
+            <div
+                class="relogio"
+                id="relogio">
+                --:--:--
+            </div>
 
-    <!-- =====================================================
-         MODAL / RELATÓRIO INDIVIDUAL
-    ====================================================== -->
 
-    <div
-        class="modal"
-        id="modalDetalhes"
-        onclick="fecharModalFora(event)"
-    >
+            <div class="ultima-atualizacao">
 
-        <div class="modal-conteudo">
+                Última medição:
 
-            <!-- CABEÇALHO -->
-
-            <div class="modal-cabecalho">
-
-                <div class="modal-titulo-area">
-
-                    <h2 id="modalTitulo">
-                        🖨️ Informações da Impressora
-                    </h2>
-
-                    <div
-                        class="modal-subtitulo"
-                        id="modalSubtitulo"
-                    >
-                        Relatório individual de acesso
-                    </div>
-
-                </div>
-
-                <button
-                    class="fechar"
-                    onclick="fecharDetalhes()"
-                    title="Fechar"
-                >
-                    ×
-                </button>
+                <strong>
+                    {{ ultima_atualizacao or 'Aguardando' }}
+                </strong>
 
             </div>
 
-            <!-- CORPO -->
 
-            <div class="modal-corpo">
+            <!-- NOVO CONTADOR -->
 
-                <h3 class="titulo-relatorio">
-                    📋 Relatório de acesso da impressora
-                </h3>
-
-                <!-- DADOS -->
-
-                <div class="detalhes-grid">
-
-                    <div class="detalhe">
-
-                        <span class="detalhe-label">
-                            LOCAL
-                        </span>
-
-                        <span
-                            class="detalhe-valor"
-                            id="detalheLocal"
-                        ></span>
-
-                    </div>
-
-                    <div class="detalhe">
-
-                        <span class="detalhe-label">
-                            MODELO
-                        </span>
-
-                        <span
-                            class="detalhe-valor"
-                            id="detalheModelo"
-                        ></span>
-
-                    </div>
-
-                    <div class="detalhe">
-
-                        <span class="detalhe-label">
-                            TIPO
-                        </span>
-
-                        <span
-                            class="detalhe-valor"
-                            id="detalheTipo"
-                        ></span>
-
-                    </div>
-
-                    <div class="detalhe">
-
-                        <span class="detalhe-label">
-                            ENDEREÇO IP
-                        </span>
-
-                        <span
-                            class="detalhe-valor"
-                            id="detalheIp"
-                        ></span>
-
-                    </div>
-
-                    <div class="detalhe">
-
-                        <span class="detalhe-label">
-                            NÚMERO DE SÉRIE
-                        </span>
-
-                        <span
-                            class="detalhe-valor"
-                            id="detalheSerie"
-                        ></span>
-
-                    </div>
-
-                    <div class="detalhe">
-
-                        <span class="detalhe-label">
-                            FILA DE IMPRESSÃO
-                        </span>
-
-                        <span
-                            class="detalhe-valor"
-                            id="detalheFila"
-                        ></span>
-
-                    </div>
-
-                    <div class="detalhe">
-
-                        <span class="detalhe-label">
-                            OBSERVAÇÃO
-                        </span>
-
-                        <span
-                            class="detalhe-valor"
-                            id="detalheObservacao"
-                        ></span>
-
-                    </div>
-
-                    <div class="detalhe">
-
-                        <span class="detalhe-label">
-                            ACESSO
-                        </span>
-
-                        <span
-                            class="detalhe-valor"
-                            id="detalheAcesso"
-                        ></span>
-
-                    </div>
-
-                </div>
-
-                <!-- STATUS -->
-
-                <div class="status-relatorio">
-
-                    <div class="status-box">
-
-                        <div class="status-box-label">
-                            STATUS DA REDE
-                        </div>
-
-                        <div
-                            class="status-box-valor"
-                            id="detalheRede"
-                        ></div>
-
-                    </div>
-
-                    <div class="status-box">
-
-                        <div class="status-box-label">
-                            STATUS GERAL
-                        </div>
-
-                        <div
-                            class="status-box-valor"
-                            id="detalheGeral"
-                        ></div>
-
-                    </div>
-
-                </div>
-
-                <!-- SUPRIMENTOS -->
-
-                <div class="secao-modal">
-
-                    <h3>
-                        📦 Suprimentos
-                    </h3>
-
-                    <div
-                        class="suprimentos-modal"
-                        id="detalheSuprimentos"
-                    ></div>
-
-                </div>
-
+            <div
+                class="contador-atualizacao"
+                id="contadorAtualizacao">
+                🔄 Próxima atualização: 50s
             </div>
 
         </div>
 
     </div>
 
+
+    <div class="navegacao">
+
+        <button
+            class="botao-nav ativo"
+            id="btnMonitoramento"
+            onclick="mostrarAba('monitoramento')">
+
+            🖨️ Monitoramento
+
+        </button>
+
+
+        <button
+            class="botao-nav"
+            id="btnAnalise"
+            onclick="mostrarAba('analise')">
+
+            📊 Análise
+
+        </button>
+
+    </div>
+
+</header>
+
+
+<main class="conteudo">
+
     <!-- =====================================================
-         DADOS DAS IMPRESSORAS
+         ABA MONITORAMENTO
     ====================================================== -->
 
-    <script
-        id="dados-impressoras"
-        type="application/json"
-    >{{ impressoras | tojson | safe }}</script>
+    <section
+        id="aba-monitoramento"
+        class="aba ativa">
+
+        <div class="resumo">
+
+            <div
+                class="contador contador-total"
+                onclick="filtrarImpressoras('todos')">
+
+                <div class="contador-titulo">
+                    TOTAL
+                </div>
+
+                <div class="contador-numero">
+                    {{ total }}
+                </div>
+
+            </div>
+
+
+            <div
+                class="contador contador-online"
+                onclick="filtrarImpressoras('online')">
+
+                <div class="contador-titulo">
+                    ONLINE
+                </div>
+
+                <div class="contador-numero">
+                    {{ online }}
+                </div>
+
+            </div>
+
+
+            <div
+                class="contador contador-offline"
+                onclick="filtrarImpressoras('offline')">
+
+                <div class="contador-titulo">
+                    OFFLINE
+                </div>
+
+                <div class="contador-numero">
+                    {{ offline }}
+                </div>
+
+            </div>
+
+
+            <div
+                class="contador contador-atencao"
+                onclick="filtrarImpressoras('atencao')">
+
+                <div class="contador-titulo">
+                    ATENÇÃO
+                </div>
+
+                <div class="contador-numero">
+                    {{ atencao }}
+                </div>
+
+            </div>
+
+
+            <div
+                class="contador contador-critico"
+                onclick="filtrarImpressoras('critico')">
+
+                <div class="contador-titulo">
+                    CRÍTICAS
+                </div>
+
+                <div class="contador-numero">
+                    {{ criticas }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="painel-impressoras">
+
+            <div class="painel-titulo">
+
+                <h2>
+                    Impressoras monitoradas
+                </h2>
+
+                <div
+                    class="contador-grid-info"
+                    id="contadorGrid">
+
+                    {{ total }} impressoras
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="grid-impressoras"
+                id="gridImpressoras">
+
+                {% for impressora in impressoras %}
+
+                    {% set status_rede = impressora.status_rede | lower %}
+                    {% set status_geral = impressora.status_geral | lower %}
+
+
+                    {% if status_rede == 'offline' %}
+
+                        {% set classe_status = 'offline' %}
+
+                    {% elif status_geral == 'critico' %}
+
+                        {% set classe_status = 'critico' %}
+
+                    {% elif status_geral == 'atencao' %}
+
+                        {% set classe_status = 'atencao' %}
+
+                    {% else %}
+
+                        {% set classe_status = 'normal' %}
+
+                    {% endif %}
+
+
+                    <div
+                        class="impressora {{ classe_status }}"
+                        data-indice="{{ loop.index0 }}"
+                        data-rede="{{ status_rede }}"
+                        data-geral="{{ status_geral }}"
+                        onclick="abrirDetalhes({{ loop.index0 }})">
+
+                        <div class="impressora-nome">
+                            {{ impressora.local }}
+                        </div>
+
+                        <div class="impressora-local">
+                            {{ impressora.modelo or 'Impressora' }}
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+
+        <div class="rodape">
+            Monitoramento automático • Verificação periódica do sistema
+        </div>
+
+    </section>
 
 
     <!-- =====================================================
-         JAVASCRIPT
+         ABA ANÁLISE
     ====================================================== -->
 
-    <script>
+    <section
+        id="aba-analise"
+        class="aba">
 
-        /* =====================================================
-           CARREGAR DADOS DO FLASK
-        ===================================================== */
+        <div class="cabecalho-analise">
 
-        let impressoras = [];
+            <div>
 
-        try {
+                <h2>
+                    Análise de dados
+                </h2>
 
-            const elementoDados =
-                document.getElementById("dados-impressoras");
+                <p>
+                    Informações consolidadas a partir do histórico das impressoras.
+                </p>
 
-            if (!elementoDados) {
+            </div>
 
-                console.error(
-                    "ERRO: elemento dados-impressoras não foi encontrado."
+        </div>
+
+
+        <div class="indicadores-analise">
+
+            <div class="indicador">
+
+                <div class="indicador-titulo">
+                    Registros consolidados
+                </div>
+
+                <div class="indicador-valor">
+                    {{ analise.total_registros }}
+                </div>
+
+                <div class="indicador-legenda">
+                    Registros por impressora e dia
+                </div>
+
+            </div>
+
+
+            <div class="indicador">
+
+                <div class="indicador-titulo">
+                    Consumo médio
+                </div>
+
+                <div class="indicador-valor">
+                    {{ "%.2f"|format(analise.consumo_medio) }}%
+                </div>
+
+                <div class="indicador-legenda">
+                    Média das medições consolidadas
+                </div>
+
+            </div>
+
+
+            <div class="indicador">
+
+                <div class="indicador-titulo">
+                    Críticas
+                </div>
+
+                <div class="indicador-valor">
+                    {{ analise.total_criticas }}
+                </div>
+
+                <div class="indicador-legenda">
+                    Ocorrências de nível crítico
+                </div>
+
+            </div>
+
+
+            <div class="indicador">
+
+                <div class="indicador-titulo">
+                    Atenção
+                </div>
+
+                <div class="indicador-valor">
+                    {{ analise.total_atencoes }}
+                </div>
+
+                <div class="indicador-legenda">
+                    Ocorrências de atenção
+                </div>
+
+            </div>
+
+
+            <div class="indicador">
+
+                <div class="indicador-titulo">
+                    Disponibilidade
+                </div>
+
+                <div class="indicador-valor">
+
+                    {% if analise.total_online + analise.total_offline > 0 %}
+
+                        {{ "%.1f"|format(
+                            (analise.total_online /
+                            (analise.total_online + analise.total_offline)) * 100
+                        ) }}%
+
+                    {% else %}
+
+                        0%
+
+                    {% endif %}
+
+                </div>
+
+                <div class="indicador-legenda">
+                    Percentual de medições online
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="grade-analise">
+
+            <div class="painel-analise">
+
+                <h3>
+                    Consumo médio por setor
+                </h3>
+
+
+                {% if analise.setores %}
+
+                    <div class="lista-barras">
+
+                        {% set maior_consumo = analise.setores[0].consumo %}
+
+
+                        {% for setor in analise.setores %}
+
+                            <div class="item-barra">
+
+                                <div
+                                    class="item-barra-nome"
+                                    title="{{ setor.local }}">
+
+                                    {{ setor.local }}
+
+                                </div>
+
+
+                                <div class="item-barra-fundo">
+
+                                    {% if maior_consumo > 0 %}
+
+                                        {% set largura =
+                                            (setor.consumo / maior_consumo * 100)
+                                        %}
+
+                                    {% else %}
+
+                                        {% set largura = 0 %}
+
+                                    {% endif %}
+
+
+                                    <div
+                                        class="item-barra-preenchimento"
+                                        style="width: {{ largura }}%;">
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="item-barra-valor">
+                                    {{ "%.2f"|format(setor.consumo) }}%
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="estado-vazio">
+                        Ainda não existem dados consolidados suficientes.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="painel-analise">
+
+                <h3>
+                    Evolução do consumo
+                </h3>
+
+
+                {% if analise.evolucao %}
+
+                    <div class="evolucao">
+
+                        {% set maior_evolucao =
+                            analise.evolucao | map(attribute='consumo') | max
+                        %}
+
+
+                        {% for item in analise.evolucao %}
+
+                            <div class="evolucao-item">
+
+                                <div class="evolucao-data">
+                                    {{ item.data }}
+                                </div>
+
+
+                                <div class="evolucao-barra">
+
+                                    {% if maior_evolucao > 0 %}
+
+                                        {% set largura =
+                                            (item.consumo / maior_evolucao * 100)
+                                        %}
+
+                                    {% else %}
+
+                                        {% set largura = 0 %}
+
+                                    {% endif %}
+
+
+                                    <div
+                                        class="evolucao-preenchimento"
+                                        style="width: {{ largura }}%;">
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="evolucao-valor">
+                                    {{ "%.2f"|format(item.consumo) }}%
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="estado-vazio">
+                        A evolução aparecerá após novos dias de consolidação.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <div class="painel-analise">
+
+            <h3>
+                Top 10 impressoras com maior consumo
+            </h3>
+
+
+            {% if analise.top_impressoras %}
+
+                <div class="tabela-container">
+
+                    <table class="tabela">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>#</th>
+                                <th>Impressora</th>
+                                <th>Modelo</th>
+                                <th>IP</th>
+                                <th>Medições</th>
+                                <th>Consumo médio</th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+                            {% for impressora in analise.top_impressoras %}
+
+                                <tr>
+
+                                    <td>
+                                        {{ loop.index }}
+                                    </td>
+
+                                    <td>
+
+                                        <strong>
+                                            {{ impressora.local }}
+                                        </strong>
+
+                                    </td>
+
+                                    <td>
+                                        {{ impressora.modelo }}
+                                    </td>
+
+                                    <td>
+                                        {{ impressora.ip }}
+                                    </td>
+
+                                    <td>
+                                        {{ impressora.medicoes }}
+                                    </td>
+
+                                    <td>
+
+                                        <span class="badge-consumo">
+                                            {{ "%.2f"|format(impressora.consumo) }}%
+                                        </span>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="estado-vazio">
+                    Ainda não existem dados consolidados para gerar o ranking.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+
+        <div
+            class="painel-analise"
+            style="margin-top: 14px;">
+
+            <h3>
+                Status das medições consolidadas
+            </h3>
+
+
+            <div class="grade-analise">
+
+                <div>
+
+                    <div class="item-barra">
+
+                        <div class="item-barra-nome">
+                            Online
+                        </div>
+
+                        <div class="item-barra-fundo">
+
+                            {% set total_status =
+                                analise.total_online +
+                                analise.total_offline
+                            %}
+
+
+                            {% if total_status > 0 %}
+
+                                {% set largura_online =
+                                    (analise.total_online / total_status * 100)
+                                %}
+
+                            {% else %}
+
+                                {% set largura_online = 0 %}
+
+                            {% endif %}
+
+
+                            <div
+                                class="item-barra-preenchimento"
+                                style="width: {{ largura_online }}%;">
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="item-barra-valor">
+                            {{ analise.total_online }}
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="item-barra"
+                        style="margin-top: 10px;">
+
+                        <div class="item-barra-nome">
+                            Offline
+                        </div>
+
+                        <div class="item-barra-fundo">
+
+                            {% if total_status > 0 %}
+
+                                {% set largura_offline =
+                                    (analise.total_offline / total_status * 100)
+                                %}
+
+                            {% else %}
+
+                                {% set largura_offline = 0 %}
+
+                            {% endif %}
+
+
+                            <div
+                                class="item-barra-preenchimento"
+                                style="width: {{ largura_offline }}%;">
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="item-barra-valor">
+                            {{ analise.total_offline }}
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div>
+
+                    <div class="item-barra">
+
+                        <div class="item-barra-nome">
+                            Normais
+                        </div>
+
+                        <div class="item-barra-fundo">
+
+                            {% set total_niveis =
+                                analise.total_normais +
+                                analise.total_atencoes +
+                                analise.total_criticas
+                            %}
+
+
+                            {% if total_niveis > 0 %}
+
+                                {% set largura_normais =
+                                    (analise.total_normais / total_niveis * 100)
+                                %}
+
+                            {% else %}
+
+                                {% set largura_normais = 0 %}
+
+                            {% endif %}
+
+
+                            <div
+                                class="item-barra-preenchimento"
+                                style="width: {{ largura_normais }}%;">
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="item-barra-valor">
+                            {{ analise.total_normais }}
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="item-barra"
+                        style="margin-top: 10px;">
+
+                        <div class="item-barra-nome">
+                            Atenção / Crítico
+                        </div>
+
+                        <div class="item-barra-fundo">
+
+                            {% if total_niveis > 0 %}
+
+                                {% set largura_problemas =
+                                    (
+                                        (analise.total_atencoes +
+                                        analise.total_criticas)
+                                        / total_niveis * 100
+                                    )
+                                %}
+
+                            {% else %}
+
+                                {% set largura_problemas = 0 %}
+
+                            {% endif %}
+
+
+                            <div
+                                class="item-barra-preenchimento"
+                                style="width: {{ largura_problemas }}%;">
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="item-barra-valor">
+
+                            {{
+                                analise.total_atencoes +
+                                analise.total_criticas
+                            }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="rodape">
+            Análise baseada nos dados consolidados armazenados no banco de dados.
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- =========================================================
+     MODAL DE DETALHES
+========================================================== -->
+
+<div
+    class="modal"
+    id="modalDetalhes"
+    onclick="fecharModalFora(event)">
+
+    <div class="modal-conteudo">
+
+        <div class="modal-cabecalho">
+
+            <h2 id="modalTitulo">
+                Detalhes da impressora
+            </h2>
+
+            <button
+                class="fechar"
+                onclick="fecharModal()">
+
+                &times;
+
+            </button>
+
+        </div>
+
+
+        <div
+            class="modal-corpo"
+            id="modalCorpo">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     DADOS DAS IMPRESSORAS
+========================================================== -->
+
+<script
+    id="dados-impressoras"
+    type="application/json">
+
+    {{ impressoras | tojson | safe }}
+
+</script>
+
+
+<script>
+
+    const impressoras =
+        JSON.parse(
+            document.getElementById(
+                "dados-impressoras"
+            ).textContent
+        );
+
+
+    /* =========================================================
+       RELÓGIO
+    ========================================================== */
+
+    function atualizarRelogio() {
+
+        const agora = new Date();
+
+        const horas =
+            String(
+                agora.getHours()
+            ).padStart(2, "0");
+
+        const minutos =
+            String(
+                agora.getMinutes()
+            ).padStart(2, "0");
+
+        const segundos =
+            String(
+                agora.getSeconds()
+            ).padStart(2, "0");
+
+
+        document.getElementById(
+            "relogio"
+        ).textContent =
+            `${horas}:${minutos}:${segundos}`;
+    }
+
+
+    setInterval(
+        atualizarRelogio,
+        1000
+    );
+
+    atualizarRelogio();
+
+
+    /* =========================================================
+       CONVERSÃO CORRETA DA DATA DO SQLITE
+    ========================================================== */
+
+    function converterDataBanco(dataTexto) {
+
+        if (!dataTexto) {
+            return null;
+        }
+
+
+        const texto =
+            String(
+                dataTexto
+            ).trim();
+
+
+        let partes =
+            texto.split(" ");
+
+
+        if (partes.length < 2) {
+
+            partes =
+                texto.split("T");
+
+        }
+
+
+        const dataParte =
+            partes[0];
+
+        const horaParte =
+            partes[1] || "00:00:00";
+
+
+        let dia;
+        let mes;
+        let ano;
+
+
+        if (dataParte.includes("/")) {
+
+            const partesData =
+                dataParte.split("/");
+
+
+            if (partesData.length !== 3) {
+                return null;
+            }
+
+
+            dia =
+                parseInt(
+                    partesData[0],
+                    10
                 );
 
-            } else {
+            mes =
+                parseInt(
+                    partesData[1],
+                    10
+                ) - 1;
 
-                const textoDados =
-                    elementoDados.textContent.trim();
-
-                console.log(
-                    "Tamanho dos dados recebidos:",
-                    textoDados.length
+            ano =
+                parseInt(
+                    partesData[2],
+                    10
                 );
 
-                if (!textoDados) {
+        }
 
-                    console.error(
-                        "ERRO: o Flask não enviou dados das impressoras."
+
+        else if (dataParte.includes("-")) {
+
+            const partesData =
+                dataParte.split("-");
+
+
+            if (partesData.length !== 3) {
+                return null;
+            }
+
+
+            ano =
+                parseInt(
+                    partesData[0],
+                    10
+                );
+
+            mes =
+                parseInt(
+                    partesData[1],
+                    10
+                ) - 1;
+
+            dia =
+                parseInt(
+                    partesData[2],
+                    10
+                );
+
+        }
+
+
+        else {
+
+            return null;
+
+        }
+
+
+        const partesHora =
+            horaParte.split(":");
+
+
+        const hora =
+            parseInt(
+                partesHora[0] || "0",
+                10
+            );
+
+        const minuto =
+            parseInt(
+                partesHora[1] || "0",
+                10
+            );
+
+        const segundo =
+            parseInt(
+                partesHora[2] || "0",
+                10
+            );
+
+
+        const data =
+            new Date(
+                ano,
+                mes,
+                dia,
+                hora,
+                minuto,
+                segundo
+            );
+
+
+        if (
+            isNaN(
+                data.getTime()
+            )
+        ) {
+
+            return null;
+
+        }
+
+
+        return data;
+    }
+
+
+    /* =========================================================
+       STATUS DO SISTEMA
+    ========================================================== */
+
+    function atualizarStatusSistema() {
+
+        const ponto =
+            document.getElementById(
+                "pontoSistema"
+            );
+
+        const texto =
+            document.getElementById(
+                "textoSistema"
+            );
+
+
+        let ultimaData = null;
+
+
+        impressoras.forEach(
+            function (impressora) {
+
+                if (!impressora.data_hora) {
+                    return;
+                }
+
+
+                const data =
+                    converterDataBanco(
+                        impressora.data_hora
                     );
 
-                } else {
 
-                    impressoras =
-                        JSON.parse(textoDados);
+                if (!data) {
+                    return;
+                }
 
-                    console.log(
-                        "Impressoras carregadas:",
-                        impressoras.length
-                    );
 
-                    if (impressoras.length > 0) {
+                if (
+                    ultimaData === null ||
+                    data > ultimaData
+                ) {
 
-                        console.log(
-                            "Primeira impressora:",
-                            impressoras[0]
-                        );
-
-                    }
+                    ultimaData = data;
 
                 }
 
             }
-
-        } catch (erro) {
-
-            console.error(
-                "ERRO AO CONVERTER OS DADOS DAS IMPRESSORAS:",
-                erro
-            );
-
-            impressoras = [];
-
-        }
-
-
-        /* =====================================================
-           CONFIGURAR BARRAS
-        ===================================================== */
-
-        function configurarBarras() {
-
-            const barras =
-                document.querySelectorAll(".preenchimento");
-
-            barras.forEach(function (barra) {
-
-                const percentual =
-                    Number(barra.dataset.percent);
-
-                const valor =
-                    Math.max(
-                        0,
-                        Math.min(
-                            100,
-                            percentual
-                        )
-                    );
-
-                barra.style.width =
-                    valor + "%";
-
-            });
-
-        }
-
-
-        /* =====================================================
-           RELÓGIO
-        ===================================================== */
-
-        function atualizarRelogio() {
-
-            const agora =
-                new Date();
-
-            const hora =
-                String(
-                    agora.getHours()
-                ).padStart(2, "0");
-
-            const minutos =
-                String(
-                    agora.getMinutes()
-                ).padStart(2, "0");
-
-            const segundos =
-                String(
-                    agora.getSeconds()
-                ).padStart(2, "0");
-
-            const elemento =
-                document.getElementById("hora");
-
-            if (elemento) {
-
-                elemento.textContent =
-                    hora +
-                    ":" +
-                    minutos +
-                    ":" +
-                    segundos;
-
-            }
-
-        }
-
-        setInterval(
-            atualizarRelogio,
-            1000
         );
 
-        atualizarRelogio();
+
+        if (!ultimaData) {
+
+            texto.textContent =
+                "Aguardando dados";
+
+            ponto.classList.add(
+                "ponto-inativo"
+            );
+
+            return;
+
+        }
 
 
-        /* =====================================================
-           FILTROS
-        ===================================================== */
+        const agora =
+            new Date();
 
-        function filtrarImpressoras(
-            filtro,
-            botao
+
+        const diferencaMilissegundos =
+            agora.getTime() -
+            ultimaData.getTime();
+
+
+        const diferencaMinutos =
+            diferencaMilissegundos /
+            60000;
+
+
+        if (
+            diferencaMinutos >= 0 &&
+            diferencaMinutos <= 15
         ) {
 
-            const cards =
-                document.querySelectorAll(
-                    ".impressora"
-                );
+            texto.textContent =
+                "Sistema atualizado";
 
-            let quantidade = 0;
+            ponto.classList.remove(
+                "ponto-inativo"
+            );
 
-            cards.forEach(function (card) {
+        }
+
+
+        else {
+
+            texto.textContent =
+                "Sistema desatualizado";
+
+            ponto.classList.add(
+                "ponto-inativo"
+            );
+
+        }
+
+    }
+
+
+    atualizarStatusSistema();
+
+
+    /* =========================================================
+       ABAS
+    ========================================================== */
+
+    function mostrarAba(nome) {
+
+        const monitoramento =
+            document.getElementById(
+                "aba-monitoramento"
+            );
+
+        const analise =
+            document.getElementById(
+                "aba-analise"
+            );
+
+
+        const btnMonitoramento =
+            document.getElementById(
+                "btnMonitoramento"
+            );
+
+        const btnAnalise =
+            document.getElementById(
+                "btnAnalise"
+            );
+
+
+        monitoramento.classList.remove(
+            "ativa"
+        );
+
+        analise.classList.remove(
+            "ativa"
+        );
+
+        btnMonitoramento.classList.remove(
+            "ativo"
+        );
+
+        btnAnalise.classList.remove(
+            "ativo"
+        );
+
+
+        if (
+            nome === "analise"
+        ) {
+
+            analise.classList.add(
+                "ativa"
+            );
+
+            btnAnalise.classList.add(
+                "ativo"
+            );
+
+        }
+
+
+        else {
+
+            monitoramento.classList.add(
+                "ativa"
+            );
+
+            btnMonitoramento.classList.add(
+                "ativo"
+            );
+
+        }
+
+    }
+
+
+    /* =========================================================
+       FILTROS
+    ========================================================== */
+
+    function filtrarImpressoras(filtro) {
+
+        const cards =
+            document.querySelectorAll(
+                ".impressora"
+            );
+
+
+        let quantidade = 0;
+
+
+        cards.forEach(
+            function (card) {
 
                 const rede =
                     card.dataset.rede;
@@ -1713,33 +2090,58 @@
                 const geral =
                     card.dataset.geral;
 
+
                 let mostrar = false;
 
-                if (filtro === "todos") {
+
+                if (
+                    filtro === "todos"
+                ) {
 
                     mostrar = true;
 
-                } else if (filtro === "online") {
+                }
+
+
+                else if (
+                    filtro === "online"
+                ) {
 
                     mostrar =
                         rede === "online";
 
-                } else if (filtro === "offline") {
+                }
+
+
+                else if (
+                    filtro === "offline"
+                ) {
 
                     mostrar =
                         rede === "offline";
 
-                } else if (filtro === "atencao") {
+                }
+
+
+                else if (
+                    filtro === "atencao"
+                ) {
 
                     mostrar =
                         geral === "atencao";
 
-                } else if (filtro === "critico") {
+                }
+
+
+                else if (
+                    filtro === "critico"
+                ) {
 
                     mostrar =
                         geral === "critico";
 
                 }
+
 
                 if (mostrar) {
 
@@ -1748,792 +2150,510 @@
 
                     quantidade++;
 
-                } else {
+                }
+
+
+                else {
 
                     card.style.display =
                         "none";
 
                 }
 
-            });
-
-
-            document
-                .querySelectorAll(".indicador")
-                .forEach(function (item) {
-
-                    item.classList.remove(
-                        "ativo"
-                    );
-
-                });
-
-
-            if (botao) {
-
-                botao.classList.add(
-                    "ativo"
-                );
-
-            }
-
-
-            const textos = {
-
-                todos:
-                    "Exibindo todas as impressoras",
-
-                online:
-                    "Exibindo impressoras ONLINE",
-
-                offline:
-                    "Exibindo impressoras OFFLINE",
-
-                atencao:
-                    "Exibindo impressoras em ATENÇÃO",
-
-                critico:
-                    "Exibindo impressoras CRÍTICAS"
-
-            };
-
-
-            const informacao =
-                document.getElementById(
-                    "informacaoFiltro"
-                );
-
-            if (informacao) {
-
-                informacao.textContent =
-                    textos[filtro];
-
-            }
-
-
-            const contador =
-                document.getElementById(
-                    "contadorImpressoras"
-                );
-
-            if (contador) {
-
-                contador.textContent =
-                    quantidade;
-
-            }
-
-
-            const lista =
-                document.getElementById(
-                    "listaImpressoras"
-                );
-
-            if (!lista) {
-                return;
-            }
-
-
-            const mensagemExistente =
-                document.getElementById(
-                    "semResultados"
-                );
-
-            if (mensagemExistente) {
-
-                mensagemExistente.remove();
-
-            }
-
-
-            if (quantidade === 0) {
-
-                const mensagem =
-                    document.createElement(
-                        "div"
-                    );
-
-                mensagem.className =
-                    "sem-resultados";
-
-                mensagem.id =
-                    "semResultados";
-
-                mensagem.textContent =
-                    "Nenhuma impressora encontrada neste filtro.";
-
-                lista.appendChild(
-                    mensagem
-                );
-
-            }
-
-        }
-
-
-        /* =====================================================
-           ABRIR RELATÓRIO INDIVIDUAL
-        ===================================================== */
-
-        function abrirDetalhes(indice) {
-
-            console.log(
-                "Clique no card. Índice recebido:",
-                indice
-            );
-
-            indice = Number(indice);
-
-            console.log(
-                "Índice convertido:",
-                indice
-            );
-
-            console.log(
-                "Quantidade de impressoras:",
-                impressoras.length
-            );
-
-
-            if (
-                !Number.isInteger(indice) ||
-                indice < 0 ||
-                indice >= impressoras.length
-            ) {
-
-                console.error(
-                    "Índice de impressora inválido:",
-                    indice
-                );
-
-                return;
-
-            }
-
-
-            const impressora =
-                impressoras[indice];
-
-
-            if (!impressora) {
-
-                console.error(
-                    "Impressora não encontrada:",
-                    indice
-                );
-
-                return;
-
-            }
-
-
-            console.log(
-                "Impressora selecionada:",
-                impressora
-            );
-
-
-            /* =================================================
-               TÍTULO
-            ================================================= */
-
-            const modalTitulo =
-                document.getElementById(
-                    "modalTitulo"
-                );
-
-            if (modalTitulo) {
-
-                modalTitulo.textContent =
-                    "🖨️ " +
-                    (
-                        impressora.local ||
-                        "Impressora"
-                    );
-
-            }
-
-
-            const modalSubtitulo =
-                document.getElementById(
-                    "modalSubtitulo"
-                );
-
-            if (modalSubtitulo) {
-
-                modalSubtitulo.textContent =
-                    "Relatório individual de acesso";
-
-            }
-
-
-            /* =================================================
-               DADOS
-            ================================================= */
-
-            const detalheLocal =
-                document.getElementById(
-                    "detalheLocal"
-                );
-
-            if (detalheLocal) {
-
-                detalheLocal.textContent =
-                    impressora.local || "-";
-
-            }
-
-
-            const detalheModelo =
-                document.getElementById(
-                    "detalheModelo"
-                );
-
-            if (detalheModelo) {
-
-                detalheModelo.textContent =
-                    impressora.modelo || "-";
-
-            }
-
-
-            const detalheTipo =
-                document.getElementById(
-                    "detalheTipo"
-                );
-
-            if (detalheTipo) {
-
-                detalheTipo.textContent =
-                    impressora.tipo || "-";
-
-            }
-
-
-            const detalheIp =
-                document.getElementById(
-                    "detalheIp"
-                );
-
-            if (detalheIp) {
-
-                detalheIp.textContent =
-                    impressora.ip || "-";
-
-            }
-
-
-            const detalheSerie =
-                document.getElementById(
-                    "detalheSerie"
-                );
-
-            if (detalheSerie) {
-
-                detalheSerie.textContent =
-                    impressora.serie || "-";
-
-            }
-
-
-            const detalheFila =
-                document.getElementById(
-                    "detalheFila"
-                );
-
-            if (detalheFila) {
-
-                detalheFila.textContent =
-                    impressora.fila || "-";
-
-            }
-
-
-            const detalheObservacao =
-                document.getElementById(
-                    "detalheObservacao"
-                );
-
-            if (detalheObservacao) {
-
-                detalheObservacao.textContent =
-                    impressora.observacao ||
-                    "Nenhuma observação registrada.";
-
-            }
-
-
-            /* =================================================
-               ACESSO À IMPRESSORA
-            ================================================= */
-
-            const acesso =
-                document.getElementById(
-                    "detalheAcesso"
-                );
-
-            if (acesso) {
-
-                if (
-                    impressora.ip &&
-                    impressora.ip !== "-"
-                ) {
-
-                    const url =
-                        "http://" +
-                        String(
-                            impressora.ip
-                        ).trim();
-
-                    acesso.textContent =
-                        "🌐 " + url;
-
-                    acesso.style.color =
-                        "#2563eb";
-
-                    acesso.style.cursor =
-                        "pointer";
-
-                    acesso.style.textDecoration =
-                        "underline";
-
-                    acesso.onclick =
-                        function (event) {
-
-                            event.stopPropagation();
-
-                            window.open(
-                                url,
-                                "_blank"
-                            );
-
-                        };
-
-                } else {
-
-                    acesso.textContent =
-                        "Endereço não informado";
-
-                    acesso.style.color =
-                        "#6b7280";
-
-                    acesso.style.cursor =
-                        "default";
-
-                    acesso.style.textDecoration =
-                        "none";
-
-                    acesso.onclick =
-                        null;
-
-                }
-
-            }
-
-
-            /* =================================================
-               STATUS DA REDE
-            ================================================= */
-
-            const detalheRede =
-                document.getElementById(
-                    "detalheRede"
-                );
-
-            if (detalheRede) {
-
-                if (
-                    impressora.status_rede ===
-                    "online"
-                ) {
-
-                    detalheRede.textContent =
-                        "🟢 ONLINE";
-
-                    detalheRede.style.color =
-                        "#15803d";
-
-                } else {
-
-                    detalheRede.textContent =
-                        "🔴 OFFLINE";
-
-                    detalheRede.style.color =
-                        "#b91c1c";
-
-                }
-
-            }
-
-
-            /* =================================================
-               STATUS GERAL
-            ================================================= */
-
-            const detalheGeral =
-                document.getElementById(
-                    "detalheGeral"
-                );
-
-            if (detalheGeral) {
-
-                if (
-                    impressora.status_geral ===
-                    "normal"
-                ) {
-
-                    detalheGeral.textContent =
-                        "🟢 NORMAL";
-
-                    detalheGeral.style.color =
-                        "#15803d";
-
-                } else if (
-                    impressora.status_geral ===
-                    "atencao"
-                ) {
-
-                    detalheGeral.textContent =
-                        "🟡 ATENÇÃO";
-
-                    detalheGeral.style.color =
-                        "#a16207";
-
-                } else {
-
-                    detalheGeral.textContent =
-                        "🚨 CRÍTICO";
-
-                    detalheGeral.style.color =
-                        "#b91c1c";
-
-                }
-
-            }
-
-
-            /* =================================================
-               SUPRIMENTOS
-            ================================================= */
-
-            const areaSuprimentos =
-                document.getElementById(
-                    "detalheSuprimentos"
-                );
-
-            if (areaSuprimentos) {
-
-                areaSuprimentos.innerHTML =
-                    "";
-
-                const nomes = {
-
-                    toner_preto:
-                        "⚫ Toner Preto",
-
-                    toner_ciano:
-                        "🔵 Toner Ciano",
-
-                    toner_magenta:
-                        "🟣 Toner Magenta",
-
-                    toner_amarelo:
-                        "🟡 Toner Amarelo",
-
-                    unidade_imagem:
-                        "📷 Unidade de Imagem"
-
-                };
-
-
-                const classes = {
-
-                    toner_preto:
-                        "barra-preto",
-
-                    toner_ciano:
-                        "barra-ciano",
-
-                    toner_magenta:
-                        "barra-magenta",
-
-                    toner_amarelo:
-                        "barra-amarelo",
-
-                    unidade_imagem:
-                        "barra-unidade"
-
-                };
-
-
-                if (
-                    impressora.suprimentos
-                ) {
-
-                    Object.entries(
-                        impressora.suprimentos
-                    ).forEach(
-                        function (
-                            [nome, percentual]
-                        ) {
-
-                            const valor =
-                                Math.max(
-                                    0,
-                                    Math.min(
-                                        100,
-                                        Number(
-                                            percentual
-                                        )
-                                    )
-                                );
-
-
-                            const item =
-                                document.createElement(
-                                    "div"
-                                );
-
-                            item.className =
-                                "suprimento-modal";
-
-
-                            item.innerHTML = `
-
-                                <div class="suprimento-modal-topo">
-
-                                    <span>
-                                        ${
-                                            nomes[nome] ||
-                                            nome
-                                        }
-                                    </span>
-
-                                    <strong>
-                                        ${valor}%
-                                    </strong>
-
-                                </div>
-
-                                <div class="barra">
-
-                                    <div
-                                        class="preenchimento ${
-                                            classes[nome] ||
-                                            "barra-unidade"
-                                        }"
-                                        style="width: ${valor}%"
-                                    ></div>
-
-                                </div>
-
-                            `;
-
-
-                            areaSuprimentos.appendChild(
-                                item
-                            );
-
-                        }
-                    );
-
-                }
-
-            }
-
-
-            /* =================================================
-               ABRIR MODAL
-            ================================================= */
-
-            const modal =
-                document.getElementById(
-                    "modalDetalhes"
-                );
-
-            if (!modal) {
-
-                console.error(
-                    "ERRO: modalDetalhes não foi encontrado."
-                );
-
-                return;
-
-            }
-
-
-            modal.classList.add(
-                "aberto"
-            );
-
-            document.body.style.overflow =
-                "hidden";
-
-
-            console.log(
-                "Modal aberto com sucesso."
-            );
-
-        }
-
-
-        /* =====================================================
-           FECHAR MODAL AO CLICAR FORA
-        ===================================================== */
-
-        function fecharModalFora(event) {
-
-            if (
-                event &&
-                event.target &&
-                event.target.id ===
-                "modalDetalhes"
-            ) {
-
-                fecharDetalhes();
-
-            }
-
-        }
-
-
-        /* =====================================================
-           FECHAR MODAL
-        ===================================================== */
-
-        function fecharDetalhes() {
-
-            const modal =
-                document.getElementById(
-                    "modalDetalhes"
-                );
-
-            if (!modal) {
-                return;
-            }
-
-
-            modal.classList.remove(
-                "aberto"
-            );
-
-
-            document.body.style.overflow =
-                "";
-
-        }
-
-
-        /* =====================================================
-           ESC FECHA O RELATÓRIO
-        ===================================================== */
-
-        document.addEventListener(
-            "keydown",
-            function (event) {
-
-                if (
-                    event.key ===
-                    "Escape"
-                ) {
-
-                    fecharDetalhes();
-
-                }
-
             }
         );
 
 
-        /* =====================================================
-           ATUALIZAÇÃO AUTOMÁTICA
-           60 segundos
-        ===================================================== */
+        document.getElementById(
+            "contadorGrid"
+        ).textContent =
+            `${quantidade} impressora${quantidade !== 1 ? "s" : ""}`;
 
-        let segundosRestantes =
-            60;
+    }
 
 
-        const contadorAtualizacao =
-            document.getElementById(
-                "contadorAtualizacao"
+    /* =========================================================
+       DETALHES DA IMPRESSORA
+    ========================================================== */
+
+    function abrirDetalhes(indice) {
+
+        const impressora =
+            impressoras[indice];
+
+
+        if (!impressora) {
+            return;
+        }
+
+
+        document.getElementById(
+            "modalTitulo"
+        ).textContent =
+            impressora.local ||
+            "Impressora";
+
+
+        let html = "";
+
+
+        html += `
+
+            <div class="detalhes-grid">
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        Local
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.local || "-"}
+                    </span>
+
+                </div>
+
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        Modelo
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.modelo || "-"}
+                    </span>
+
+                </div>
+
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        Tipo
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.tipo || "-"}
+                    </span>
+
+                </div>
+
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        IP
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.ip || "-"}
+                    </span>
+
+                </div>
+
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        Número de série
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.serie || "-"}
+                    </span>
+
+                </div>
+
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        Papel
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.paper || "-"}
+                    </span>
+
+                </div>
+
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        Status da rede
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.status_rede || "-"}
+                    </span>
+
+                </div>
+
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        Status geral
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.status_geral || "-"}
+                    </span>
+
+                </div>
+
+
+                <div class="detalhe">
+
+                    <span class="detalhe-label">
+                        Última medição
+                    </span>
+
+                    <span class="detalhe-valor">
+                        ${impressora.data_hora || "-"}
+                    </span>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        html += `
+
+            <div class="secao-modal">
+
+                <h3>
+                    Suprimentos
+                </h3>
+
+        `;
+
+
+        const suprimentos =
+            impressora.suprimentos || {};
+
+
+        const statusSuprimentos =
+            impressora.status_suprimentos || {};
+
+
+        const chaves =
+            Object.keys(
+                suprimentos
             );
 
 
-        function atualizarContador() {
+        if (
+            chaves.length === 0
+        ) {
 
-            const minutos =
-                Math.floor(
-                    segundosRestantes /
-                    60
-                );
+            html += `
 
+                <div class="sem-suprimentos">
+                    Nenhuma informação de suprimentos disponível.
+                </div>
 
-            const segundos =
-                segundosRestantes %
-                60;
-
-
-            if (
-                contadorAtualizacao
-            ) {
-
-                contadorAtualizacao.textContent =
-                    String(
-                        minutos
-                    ).padStart(
-                        2,
-                        "0"
-                    ) +
-                    ":" +
-                    String(
-                        segundos
-                    ).padStart(
-                        2,
-                        "0"
-                    );
-
-            }
-
-
-            if (
-                segundosRestantes <=
-                0
-            ) {
-
-                window.location.reload();
-
-                return;
-
-            }
-
-
-            segundosRestantes--;
+            `;
 
         }
 
 
-        atualizarContador();
+        else {
+
+            html += `
+
+                <div class="suprimentos">
+
+            `;
 
 
+            chaves.forEach(
+                function (chave) {
+
+                    let valor =
+                        Number(
+                            suprimentos[chave]
+                        );
+
+
+                    if (
+                        Number.isNaN(
+                            valor
+                        )
+                    ) {
+
+                        valor = 0;
+
+                    }
+
+
+                    valor =
+                        Math.max(
+                            0,
+                            Math.min(
+                                100,
+                                valor
+                            )
+                        );
+
+
+                    const status =
+                        statusSuprimentos[chave] ||
+                        "normal";
+
+
+                    let classeBarra =
+                        "barra-normal";
+
+
+                    if (
+                        status === "atencao"
+                    ) {
+
+                        classeBarra =
+                            "barra-atencao";
+
+                    }
+
+
+                    else if (
+                        status === "critico"
+                    ) {
+
+                        classeBarra =
+                            "barra-critico";
+
+                    }
+
+
+                    let nome =
+                        chave
+                        .replace(
+                            "toner_",
+                            "Toner "
+                        )
+                        .replace(
+                            "unidade_imagem",
+                            "Unidade de imagem"
+                        );
+
+
+                    nome =
+                        nome.charAt(0).toUpperCase() +
+                        nome.slice(1);
+
+
+                    html += `
+
+                        <div class="suprimento">
+
+                            <div class="suprimento-topo">
+
+                                <span>
+                                    ${nome}
+                                </span>
+
+                                <strong>
+                                    ${valor}%
+                                </strong>
+
+                            </div>
+
+
+                            <div class="barra-suprimento">
+
+                                <div
+                                    class="barra-preenchimento ${classeBarra}"
+                                    style="width: ${valor}%;">
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+
+            html += `
+
+                </div>
+
+            `;
+
+        }
+
+
+        html += `
+
+            </div>
+
+        `;
+
+
+        if (impressora.ip) {
+
+            html += `
+
+                <a
+                    class="botao-acesso"
+                    href="http://${impressora.ip}"
+                    target="_blank">
+
+                    🌐 Acessar interface da impressora
+
+                </a>
+
+            `;
+
+        }
+
+
+        document.getElementById(
+            "modalCorpo"
+        ).innerHTML =
+            html;
+
+
+        document.getElementById(
+            "modalDetalhes"
+        ).classList.add(
+            "ativo"
+        );
+
+    }
+
+
+    /* =========================================================
+       FECHAR MODAL
+    ========================================================== */
+
+    function fecharModal() {
+
+        document.getElementById(
+            "modalDetalhes"
+        ).classList.remove(
+            "ativo"
+        );
+
+    }
+
+
+    function fecharModalFora(evento) {
+
+        if (
+            evento.target.id ===
+            "modalDetalhes"
+        ) {
+
+            fecharModal();
+
+        }
+
+    }
+
+
+    document.addEventListener(
+        "keydown",
+        function (evento) {
+
+            if (
+                evento.key === "Escape"
+            ) {
+
+                fecharModal();
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       ATUALIZAÇÃO AUTOMÁTICA
+       
+       A página será recarregada a cada 50 segundos.
+    ========================================================== */
+
+    let segundosParaAtualizar = 50;
+
+
+    const contadorAtualizacao =
+        document.getElementById(
+            "contadorAtualizacao"
+        );
+
+
+    function atualizarContador() {
+
+        if (
+            !contadorAtualizacao
+        ) {
+            return;
+        }
+
+
+        contadorAtualizacao.textContent =
+            `🔄 Próxima atualização: ${segundosParaAtualizar}s`;
+
+    }
+
+
+    atualizarContador();
+
+
+    const intervaloAtualizacao =
         setInterval(
-            atualizarContador,
+            function () {
+
+                segundosParaAtualizar--;
+
+
+                if (
+                    segundosParaAtualizar <= 0
+                ) {
+
+                    clearInterval(
+                        intervaloAtualizacao
+                    );
+
+
+                    contadorAtualizacao.textContent =
+                        "🔄 Atualizando...";
+
+
+                    contadorAtualizacao.classList.add(
+                        "atualizando"
+                    );
+
+
+                    setTimeout(
+                        function () {
+                            location.reload();
+                        },
+                        300
+                    );
+
+
+                    return;
+                }
+
+
+                atualizarContador();
+
+            },
             1000
         );
 
-
-        /* =====================================================
-           INICIALIZAÇÃO
-        ===================================================== */
-
-        configurarBarras();
-
-
-        console.log(
-            "Dashboard inicializada."
-        );
-
-    </script>
+</script>
+```
 
 </body>
 

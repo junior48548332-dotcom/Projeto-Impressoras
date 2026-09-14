@@ -19,3 +19,8 @@ __pycache__/
 # Sistema operacional
 .DS_Store
 Thumbs.db
+# Banco de dados local
+impressoras.db
+
+# Estado local da simulação
+estado_simulacao.json
