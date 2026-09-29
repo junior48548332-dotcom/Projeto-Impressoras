@@ -1,7 +1,10 @@
-import sqlite3
-
-
-BANCO_DADOS = "impressoras.db"
+from banco import (
+    conectar,
+    tabela_existe,
+    contar_registros,
+    criar_tabela_consolidacao,
+    estrutura_tabela
+)
 
 
 print("=" * 60)
@@ -15,8 +18,7 @@ print("=" * 60)
 # ================================================================
 
 try:
-    conexao = sqlite3.connect(BANCO_DADOS)
-    cursor = conexao.cursor()
+    conexao = conectar()
 
     print("\n[OK] Conexão com o banco realizada com sucesso.")
 
@@ -30,14 +32,10 @@ except Exception as erro:
 # VERIFICA SE O HISTÓRICO EXISTE
 # ================================================================
 
-cursor.execute("""
-    SELECT name
-    FROM sqlite_master
-    WHERE type = 'table'
-    AND name = 'historico_impressoras'
-""")
-
-tabela_historico = cursor.fetchone()
+tabela_historico = tabela_existe(
+    conexao,
+    "historico_impressoras"
+)
 
 
 if tabela_historico:
@@ -55,40 +53,9 @@ else:
 print("\nCriando tabela 'consolidacao_diaria'...")
 
 
-cursor.execute("""
-    CREATE TABLE IF NOT EXISTS consolidacao_diaria (
-
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-        data TEXT NOT NULL,
-
-        local TEXT,
-
-        ip TEXT,
-
-        modelo TEXT,
-
-        total_medicoes INTEGER DEFAULT 0,
-
-        online INTEGER DEFAULT 0,
-
-        offline INTEGER DEFAULT 0,
-
-        criticas INTEGER DEFAULT 0,
-
-        atencoes INTEGER DEFAULT 0,
-
-        normais INTEGER DEFAULT 0,
-
-        consumo_medio REAL DEFAULT 0,
-
-        ultima_medicao TEXT
-
-    )
-""")
-
-
-conexao.commit()
+criar_tabela_consolidacao(
+    conexao
+)
 
 
 print("[OK] Tabela 'consolidacao_diaria' criada/verificada com sucesso.")
@@ -103,12 +70,10 @@ print(" ESTRUTURA DA TABELA")
 print("=" * 60)
 
 
-cursor.execute("""
-    PRAGMA table_info(consolidacao_diaria)
-""")
-
-
-colunas = cursor.fetchall()
+colunas = estrutura_tabela(
+    conexao,
+    "consolidacao_diaria"
+)
 
 
 for coluna in colunas:
@@ -124,13 +89,10 @@ for coluna in colunas:
 # CONTA OS REGISTROS
 # ================================================================
 
-cursor.execute("""
-    SELECT COUNT(*)
-    FROM consolidacao_diaria
-""")
-
-
-total_registros = cursor.fetchone()[0]
+total_registros = contar_registros(
+    conexao,
+    "consolidacao_diaria"
+)
 
 
 print("\n" + "=" * 60)
@@ -156,13 +118,10 @@ else:
 # VERIFICA SE O HISTÓRICO CONTINUA INTACTO
 # ================================================================
 
-cursor.execute("""
-    SELECT COUNT(*)
-    FROM historico_impressoras
-""")
-
-
-total_historico = cursor.fetchone()[0]
+total_historico = contar_registros(
+    conexao,
+    "historico_impressoras"
+)
 
 
 print(

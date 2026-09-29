@@ -1,85 +1,65 @@
 from flask import Flask, render_template
-import pandas as pd
-import sqlite3
 import json
+
+from config import (
+    INTERVALO_ATUALIZACAO_DASHBOARD,
+    SERVIDOR_HOST,
+    SERVIDOR_PORTA,
+    SERVIDOR_DEBUG
+)
+
+from banco import (
+    conectar,
+    buscar_impressoras,
+    tabela_existe,
+    contar_registros,
+    buscar_ultimas_medicoes,
+    buscar_data_ultima_medicao,
+    buscar_indicadores_gerais,
+    buscar_consumo_por_setor,
+    buscar_top_impressoras,
+    buscar_evolucao_consumo
+)
 
 
 app = Flask(__name__)
 
 
 # ================================================================
-# CONFIGURAÇÕES
-# ================================================================
-
-ARQUIVO_EXCEL = "impressoras.xlsx"
-BANCO_DADOS = "impressoras.db"
-
-
-# ================================================================
-# CARREGA IMPRESSORAS DO EXCEL
+# CARREGA AS IMPRESSORAS
 # ================================================================
 
 def carregar_impressoras():
 
     # ------------------------------------------------------------
-    # LÊ A PLANILHA
+    # LÊ O CADASTRO DE IMPRESSORAS
     # ------------------------------------------------------------
 
     try:
 
-        df = pd.read_excel(
-            ARQUIVO_EXCEL,
-            sheet_name="Impressoras ativas",
-            header=1
+        conexao = conectar()
+
+        cadastro = buscar_impressoras(
+            conexao
         )
+
+        conexao.close()
 
     except Exception as erro:
 
         print(
-            f"[ERRO] Não foi possível carregar o Excel: {erro}"
+            f"[ERRO] Não foi possível carregar o cadastro: {erro}"
         )
 
         return []
 
 
-    # ------------------------------------------------------------
-    # PEGA AS PRIMEIRAS 6 COLUNAS
-    # ------------------------------------------------------------
+    if not cadastro:
 
-    df = df.iloc[:, :6]
-
-    df.columns = [
-        "local",
-        "modelo",
-        "tipo",
-        "paper",
-        "serie",
-        "ip"
-    ]
-
-
-    # ------------------------------------------------------------
-    # LIMPA OS DADOS
-    # ------------------------------------------------------------
-
-    for coluna in df.columns:
-
-        df[coluna] = (
-            df[coluna]
-            .fillna("")
-            .astype(str)
-            .str.strip()
+        print(
+            "[AVISO] Nenhuma impressora cadastrada. "
+            "Execute: python importar_planilha.py"
         )
-
-
-    # ------------------------------------------------------------
-    # REMOVE LINHAS SEM LOCAL OU IP
-    # ------------------------------------------------------------
-
-    df = df[
-        (df["local"] != "") &
-        (df["ip"] != "")
-    ]
 
 
     # ------------------------------------------------------------
@@ -91,36 +71,11 @@ def carregar_impressoras():
 
     try:
 
-        conexao = sqlite3.connect(
-            BANCO_DADOS
+        conexao = conectar()
+
+        registros = buscar_ultimas_medicoes(
+            conexao
         )
-
-        cursor = conexao.cursor()
-
-
-        cursor.execute("""
-            SELECT
-                local,
-                modelo,
-                tipo,
-                paper,
-                serie,
-                ip,
-                status_rede,
-                status_geral,
-                suprimentos,
-                status_suprimentos,
-                data_hora
-            FROM historico_impressoras
-            WHERE id IN (
-                SELECT MAX(id)
-                FROM historico_impressoras
-                GROUP BY ip
-            )
-        """)
-
-
-        registros = cursor.fetchall()
 
 
         for registro in registros:
@@ -206,7 +161,7 @@ def carregar_impressoras():
     impressoras = []
 
 
-    for _, linha in df.iterrows():
+    for linha in cadastro:
 
         ip = linha["ip"]
 
@@ -216,7 +171,7 @@ def carregar_impressoras():
             dados = ultimas_medicoes[ip].copy()
 
 
-            # Mantém os dados cadastrados no Excel
+            # Mantém os dados do cadastro
             dados["local"] = linha["local"]
             dados["modelo"] = linha["modelo"]
             dados["tipo"] = linha["tipo"]
@@ -295,29 +250,17 @@ def carregar_analise():
 
     try:
 
-        conexao = sqlite3.connect(
-            BANCO_DADOS
-        )
-
-        cursor = conexao.cursor()
+        conexao = conectar()
 
 
         # --------------------------------------------------------
         # VERIFICA SE A TABELA EXISTE
         # --------------------------------------------------------
 
-        cursor.execute("""
-            SELECT name
-            FROM sqlite_master
-            WHERE type = 'table'
-            AND name = 'consolidacao_diaria'
-        """)
-
-
-        tabela = cursor.fetchone()
-
-
-        if not tabela:
+        if not tabela_existe(
+            conexao,
+            "consolidacao_diaria"
+        ):
 
             conexao.close()
 
@@ -328,14 +271,9 @@ def carregar_analise():
         # TOTAL DE REGISTROS CONSOLIDADOS
         # --------------------------------------------------------
 
-        cursor.execute("""
-            SELECT COUNT(*)
-            FROM consolidacao_diaria
-        """)
-
-
-        dados["total_registros"] = (
-            cursor.fetchone()[0] or 0
+        dados["total_registros"] = contar_registros(
+            conexao,
+            "consolidacao_diaria"
         )
 
 
@@ -350,19 +288,9 @@ def carregar_analise():
         # INDICADORES GERAIS
         # --------------------------------------------------------
 
-        cursor.execute("""
-            SELECT
-                AVG(consumo_medio),
-                SUM(criticas),
-                SUM(atencoes),
-                SUM(normais),
-                SUM(online),
-                SUM(offline)
-            FROM consolidacao_diaria
-        """)
-
-
-        resultado = cursor.fetchone()
+        resultado = buscar_indicadores_gerais(
+            conexao
+        )
 
 
         dados["consumo_medio"] = (
@@ -394,17 +322,9 @@ def carregar_analise():
         # CONSUMO POR SETOR
         # --------------------------------------------------------
 
-        cursor.execute("""
-            SELECT
-                local,
-                AVG(consumo_medio) AS consumo
-            FROM consolidacao_diaria
-            GROUP BY local
-            ORDER BY consumo DESC
-        """)
-
-
-        registros_setores = cursor.fetchall()
+        registros_setores = buscar_consumo_por_setor(
+            conexao
+        )
 
 
         for local, consumo in registros_setores:
@@ -424,20 +344,9 @@ def carregar_analise():
         # TOP IMPRESSORAS
         # --------------------------------------------------------
 
-        cursor.execute("""
-            SELECT
-                local,
-                ip,
-                modelo,
-                consumo_medio,
-                total_medicoes
-            FROM consolidacao_diaria
-            ORDER BY consumo_medio DESC
-            LIMIT 10
-        """)
-
-
-        registros_top = cursor.fetchall()
+        registros_top = buscar_top_impressoras(
+            conexao
+        )
 
 
         for registro in registros_top:
@@ -472,17 +381,9 @@ def carregar_analise():
         # EVOLUÇÃO POR DIA
         # --------------------------------------------------------
 
-        cursor.execute("""
-            SELECT
-                data,
-                AVG(consumo_medio)
-            FROM consolidacao_diaria
-            GROUP BY data
-            ORDER BY data
-        """)
-
-
-        registros_evolucao = cursor.fetchall()
+        registros_evolucao = buscar_evolucao_consumo(
+            conexao
+        )
 
 
         for data, consumo in registros_evolucao:
@@ -581,25 +482,11 @@ def dashboard():
 
     try:
 
-        conexao = sqlite3.connect(
-            BANCO_DADOS
+        conexao = conectar()
+
+        ultima_atualizacao = buscar_data_ultima_medicao(
+            conexao
         )
-
-        cursor = conexao.cursor()
-
-
-        cursor.execute("""
-            SELECT MAX(data_hora)
-            FROM historico_impressoras
-        """)
-
-
-        resultado = cursor.fetchone()
-
-
-        if resultado:
-
-            ultima_atualizacao = resultado[0]
 
 
         conexao.close()
@@ -642,7 +529,9 @@ def dashboard():
 
         ultima_atualizacao=ultima_atualizacao,
 
-        analise=analise
+        analise=analise,
+
+        intervalo_atualizacao=INTERVALO_ATUALIZACAO_DASHBOARD
     )
 
 
@@ -653,7 +542,7 @@ def dashboard():
 if __name__ == "__main__":
 
     app.run(
-        debug=True,
-        host="127.0.0.1",
-        port=5000
+        debug=SERVIDOR_DEBUG,
+        host=SERVIDOR_HOST,
+        port=SERVIDOR_PORTA
     )

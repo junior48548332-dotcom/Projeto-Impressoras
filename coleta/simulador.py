@@ -1,67 +1,88 @@
 import random
 import json
 import os
-import time
+
+from config import ARQUIVO_ESTADO_SIMULACAO
 
 
-# ============================================================
-# CONFIGURAÇÕES DO SIMULADOR
-# ============================================================
+# ================================================================
+# SIMULADOR DE IMPRESSORAS
+# ================================================================
+#
+# Finge ser as impressoras da rede: gera o nível dos suprimentos
+# e o status de rede de cada uma.
+#
+# O monitor usa apenas a função coletar():
+#
+#     dados = coletar(
+#         {"ip": "192.168.0.2", "tipo": "COLOR"}
+#     )
+#
+#     {
+#         "status_rede": "online",
+#         "suprimentos": {
+#             "toner_preto": 62,
+#             "unidade_imagem": 88
+#         }
+#     }
+#
+# Cada impressora é identificada pelo IP, então mudar a ordem
+# das linhas da planilha não embaralha os dados.
+#
+# Uma coleta real (por SNMP) pode substituir este arquivo:
+# basta oferecer a mesma função coletar(impressora).
 
-ARQUIVO_ESTADO = "estado_simulacao.json"
 
-# Tempo mínimo entre ciclos do monitor.
-# O monitor atual executa a cada 10 minutos.
-INTERVALO_NOVO_CICLO = 30
+# Versão do arquivo de estado.
+# Estados gravados por versões antigas do simulador usavam a
+# posição na planilha como chave e são descartados.
+VERSAO_ESTADO = 2
 
 
-# ============================================================
-# FUNÇÕES INTERNAS
-# ============================================================
+# ================================================================
+# ESTADO DA SIMULAÇÃO
+# ================================================================
+#
+# Os níveis precisam cair aos poucos a cada coleta, então o
+# simulador guarda os valores anteriores em um arquivo JSON.
+
+
+def estado_vazio():
+
+    return {
+        "versao": VERSAO_ESTADO,
+        "suprimentos": {},
+        "rede": {}
+    }
+
 
 def carregar_estado():
-    """
-    Carrega o estado anterior do simulador.
 
-    Caso o arquivo ainda não exista, cria um estado vazio.
-    """
-
-    if not os.path.exists(ARQUIVO_ESTADO):
-        return {
-            "ultima_chamada": 0,
-            "indice_impressora": 0,
-            "suprimentos": {},
-            "rede": {}
-        }
+    if not os.path.exists(ARQUIVO_ESTADO_SIMULACAO):
+        return estado_vazio()
 
     try:
-        with open(ARQUIVO_ESTADO, "r", encoding="utf-8") as arquivo:
+        with open(ARQUIVO_ESTADO_SIMULACAO, "r", encoding="utf-8") as arquivo:
             estado = json.load(arquivo)
 
-        # Garante que todas as estruturas necessárias existam
-        estado.setdefault("ultima_chamada", 0)
-        estado.setdefault("indice_impressora", 0)
-        estado.setdefault("suprimentos", {})
-        estado.setdefault("rede", {})
-
-        return estado
-
     except (json.JSONDecodeError, OSError):
-        return {
-            "ultima_chamada": 0,
-            "indice_impressora": 0,
-            "suprimentos": {},
-            "rede": {}
-        }
+        return estado_vazio()
+
+    # Arquivo de uma versão anterior: começa do zero
+    if estado.get("versao") != VERSAO_ESTADO:
+        return estado_vazio()
+
+    # Garante que todas as estruturas necessárias existam
+    estado.setdefault("suprimentos", {})
+    estado.setdefault("rede", {})
+
+    return estado
 
 
 def salvar_estado(estado):
-    """
-    Salva o estado atual do simulador.
-    """
 
     try:
-        with open(ARQUIVO_ESTADO, "w", encoding="utf-8") as arquivo:
+        with open(ARQUIVO_ESTADO_SIMULACAO, "w", encoding="utf-8") as arquivo:
             json.dump(
                 estado,
                 arquivo,
@@ -74,31 +95,9 @@ def salvar_estado(estado):
         pass
 
 
-def preparar_ciclo(estado):
-    """
-    Identifica se estamos começando uma nova verificação.
-
-    O monitor passa alguns segundos processando as 48 impressoras.
-    Depois fica aproximadamente 10 minutos parado.
-
-    Quando detectamos uma pausa maior que INTERVALO_NOVO_CICLO,
-    reiniciamos o índice da impressora.
-    """
-
-    agora = time.time()
-
-    ultima_chamada = estado.get("ultima_chamada", 0)
-
-    if ultima_chamada == 0:
-        estado["indice_impressora"] = 0
-
-    elif agora - ultima_chamada > INTERVALO_NOVO_CICLO:
-        estado["indice_impressora"] = 0
-
-    estado["ultima_chamada"] = agora
-
-    return estado
-
+# ================================================================
+# NÍVEIS DOS SUPRIMENTOS
+# ================================================================
 
 def gerar_nivel_inicial():
     """
@@ -161,14 +160,8 @@ def talvez_repor_suprimento(valor):
     return valor
 
 
-# ============================================================
-# SUPRIMENTOS
-# ============================================================
-
-def gerar_suprimentos(tipo):
+def nomes_dos_suprimentos(tipo):
     """
-    Gera e atualiza os suprimentos da impressora.
-
     Impressoras MONO:
     - toner preto
     - unidade de imagem
@@ -181,147 +174,69 @@ def gerar_suprimentos(tipo):
     - unidade de imagem
     """
 
-    tipo = str(tipo).strip().upper()
+    if tipo == "MONO":
 
-    estado = carregar_estado()
+        return [
+            "toner_preto",
+            "unidade_imagem"
+        ]
 
-    estado = preparar_ciclo(estado)
+    return [
+        "toner_preto",
+        "toner_ciano",
+        "toner_magenta",
+        "toner_amarelo",
+        "unidade_imagem"
+    ]
 
-    indice = estado["indice_impressora"]
 
-    # A chave representa a posição da impressora na planilha.
-    chave = str(indice)
+def atualizar_suprimentos(estado, ip, tipo):
 
-    # --------------------------------------------------------
-    # Se for a primeira vez que encontramos esta impressora,
-    # criamos os níveis iniciais.
-    # --------------------------------------------------------
+    nomes = nomes_dos_suprimentos(tipo)
 
-    if chave not in estado["suprimentos"]:
+    anteriores = estado["suprimentos"].get(ip, {})
 
-        if tipo == "MONO":
+    suprimentos = {}
 
-            estado["suprimentos"][chave] = {
-                "toner_preto": gerar_nivel_inicial(),
-                "unidade_imagem": gerar_nivel_inicial()
-            }
-
-        else:
-
-            estado["suprimentos"][chave] = {
-                "toner_preto": gerar_nivel_inicial(),
-                "toner_ciano": gerar_nivel_inicial(),
-                "toner_magenta": gerar_nivel_inicial(),
-                "toner_amarelo": gerar_nivel_inicial(),
-                "unidade_imagem": gerar_nivel_inicial()
-            }
-
-    else:
-
-        suprimentos = estado["suprimentos"][chave]
+    for nome in nomes:
 
         # ----------------------------------------------------
-        # Atualiza o consumo de cada suprimento
+        # Primeira coleta desta impressora, ou suprimento que
+        # ela não tinha antes (tipo alterado na planilha).
         # ----------------------------------------------------
 
-        for nome in list(suprimentos.keys()):
+        if nome not in anteriores:
 
-            valor = suprimentos[nome]
+            suprimentos[nome] = gerar_nivel_inicial()
 
-            valor = reduzir_suprimento(valor)
-
-            valor = talvez_repor_suprimento(valor)
-
-            suprimentos[nome] = valor
+            continue
 
         # ----------------------------------------------------
-        # Caso a impressora tenha mudado de MONO para COLOR
-        # ou vice-versa na planilha, ajustamos os campos.
+        # Coletas seguintes: o nível cai aos poucos e, de vez
+        # em quando, o suprimento é reposto.
         # ----------------------------------------------------
 
-        if tipo == "MONO":
+        valor = reduzir_suprimento(
+            anteriores[nome]
+        )
 
-            suprimentos.pop("toner_ciano", None)
-            suprimentos.pop("toner_magenta", None)
-            suprimentos.pop("toner_amarelo", None)
+        suprimentos[nome] = talvez_repor_suprimento(
+            valor
+        )
 
-            suprimentos.setdefault(
-                "toner_preto",
-                gerar_nivel_inicial()
-            )
+    # Suprimentos que não pertencem mais ao tipo da impressora
+    # ficam de fora, porque só copiamos os nomes da lista acima.
 
-            suprimentos.setdefault(
-                "unidade_imagem",
-                gerar_nivel_inicial()
-            )
+    estado["suprimentos"][ip] = suprimentos
 
-        else:
-
-            suprimentos.setdefault(
-                "toner_preto",
-                gerar_nivel_inicial()
-            )
-
-            suprimentos.setdefault(
-                "toner_ciano",
-                gerar_nivel_inicial()
-            )
-
-            suprimentos.setdefault(
-                "toner_magenta",
-                gerar_nivel_inicial()
-            )
-
-            suprimentos.setdefault(
-                "toner_amarelo",
-                gerar_nivel_inicial()
-            )
-
-            suprimentos.setdefault(
-                "unidade_imagem",
-                gerar_nivel_inicial()
-            )
-
-    resultado = estado["suprimentos"][chave].copy()
-
-    # Avança para a próxima impressora
-    estado["indice_impressora"] += 1
-
-    salvar_estado(estado)
-
-    return resultado
+    return suprimentos
 
 
-# ============================================================
-# CLASSIFICAÇÃO DOS SUPRIMENTOS
-# ============================================================
-
-def classificar_nivel(percentual):
-    """
-    Classifica o nível de um suprimento.
-
-    Até 5%  = crítico
-    Até 20% = atenção
-    Acima de 20% = normal
-    """
-
-    percentual = float(percentual)
-
-    if percentual <= 5:
-        return "critico"
-
-    elif percentual <= 20:
-        return "atencao"
-
-    else:
-        return "normal"
-
-
-# ============================================================
+# ================================================================
 # STATUS DA REDE
-# ============================================================
+# ================================================================
 
-def simular_status_rede():
+def atualizar_status_rede(estado, ip):
     """
     Simula a disponibilidade da impressora.
 
@@ -332,22 +247,7 @@ def simular_status_rede():
     eventualmente poderá voltar ao funcionamento.
     """
 
-    estado = carregar_estado()
-
-    # A função é chamada depois de gerar_suprimentos().
-    # Portanto, o índice atual corresponde à impressora atual.
-    indice = estado["indice_impressora"] - 1
-
-    if indice < 0:
-        indice = 0
-
-    chave = str(indice)
-
-    status_atual = estado["rede"].get(chave, "online")
-
-    # --------------------------------------------------------
-    # Se estava offline
-    # --------------------------------------------------------
+    status_atual = estado["rede"].get(ip, "online")
 
     if status_atual == "offline":
 
@@ -358,10 +258,6 @@ def simular_status_rede():
         else:
             novo_status = "online"
 
-    # --------------------------------------------------------
-    # Se estava online
-    # --------------------------------------------------------
-
     else:
 
         # 8% de chance de ficar offline
@@ -371,16 +267,52 @@ def simular_status_rede():
         else:
             novo_status = "online"
 
-    estado["rede"][chave] = novo_status
-
-    salvar_estado(estado)
+    estado["rede"][ip] = novo_status
 
     return novo_status
 
 
-# ============================================================
+# ================================================================
+# COLETA
+# ================================================================
+
+def coletar(impressora):
+    """
+    Devolve os dados simulados de uma impressora do cadastro.
+    """
+
+    ip = str(
+        impressora["ip"]
+    ).strip()
+
+    tipo = str(
+        impressora.get("tipo", "")
+    ).strip().upper()
+
+    estado = carregar_estado()
+
+    suprimentos = atualizar_suprimentos(
+        estado,
+        ip,
+        tipo
+    )
+
+    status_rede = atualizar_status_rede(
+        estado,
+        ip
+    )
+
+    salvar_estado(estado)
+
+    return {
+        "status_rede": status_rede,
+        "suprimentos": suprimentos
+    }
+
+
+# ================================================================
 # TESTE DO SIMULADOR
-# ============================================================
+# ================================================================
 
 if __name__ == "__main__":
 
@@ -390,30 +322,28 @@ if __name__ == "__main__":
 
     print()
 
-    print("Teste MONO:")
-    print(gerar_suprimentos("MONO"))
+    print("Impressora MONO:")
+    print(
+        coletar({
+            "ip": "192.168.0.101",
+            "tipo": "MONO"
+        })
+    )
 
     print()
 
-    print("Teste COLOR:")
-    print(gerar_suprimentos("COLOR"))
-
-    print()
-
-    print("Classificação:")
-    print("5%  ->", classificar_nivel(5))
-    print("20% ->", classificar_nivel(20))
-    print("50% ->", classificar_nivel(50))
-
-    print()
-
-    print("Status da rede:")
-    print(simular_status_rede())
+    print("Impressora COLOR:")
+    print(
+        coletar({
+            "ip": "192.168.0.102",
+            "tipo": "COLOR"
+        })
+    )
 
     print()
 
     print("Arquivo de estado:")
-    print(ARQUIVO_ESTADO)
+    print(ARQUIVO_ESTADO_SIMULACAO)
 
     print()
 

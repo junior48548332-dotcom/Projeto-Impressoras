@@ -24,3 +24,5 @@ impressoras.db
 
 # Estado local da simulação
 estado_simulacao.json
+# Workspace local do VS Code
+*.code-workspace

@@ -1,205 +1,59 @@
 import time
-import sqlite3
-import json
-import pandas as pd
 
 from datetime import datetime
 
-from simulador import (
-    gerar_suprimentos,
-    classificar_nivel,
-    simular_status_rede
+from config import INTERVALO_COLETA
+
+from banco import (
+    conectar,
+    buscar_impressoras,
+    criar_tabelas,
+    salvar_medicao
 )
 
-
-# ================================================================
-# CONFIGURAÇÕES
-# ================================================================
-
-ARQUIVO_EXCEL = "impressoras.xlsx"
-BANCO_DADOS = "impressoras.db"
-
-# Intervalo entre as verificações
-# 600 segundos = 10 minutos
-INTERVALO_SEGUNDOS = 600
+from coleta.simulador import coletar
 
 
 # ================================================================
-# CRIA O BANCO DE DADOS
+# CLASSIFICAÇÃO DOS SUPRIMENTOS
 # ================================================================
 
-def criar_banco():
+def classificar_nivel(percentual):
+    """
+    Classifica o nível de um suprimento.
 
-    conexao = sqlite3.connect(BANCO_DADOS)
+    Até 5%  = crítico
+    Até 20% = atenção
+    Acima de 20% = normal
+    """
 
-    cursor = conexao.cursor()
+    percentual = float(percentual)
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS historico_impressoras (
+    if percentual <= 5:
+        return "critico"
 
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+    elif percentual <= 20:
+        return "atencao"
 
-            data_hora TEXT NOT NULL,
-
-            local TEXT,
-
-            modelo TEXT,
-
-            tipo TEXT,
-
-            paper TEXT,
-
-            serie TEXT,
-
-            ip TEXT,
-
-            status_rede TEXT,
-
-            status_geral TEXT,
-
-            suprimentos TEXT,
-
-            status_suprimentos TEXT
-        )
-    """)
-
-    conexao.commit()
-
-    conexao.close()
+    else:
+        return "normal"
 
 
 # ================================================================
-# SALVA UMA MEDIÇÃO
-# ================================================================
-
-def salvar_medicao(impressora):
-
-    conexao = sqlite3.connect(BANCO_DADOS)
-
-    cursor = conexao.cursor()
-
-    data_hora = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-
-    cursor.execute("""
-        INSERT INTO historico_impressoras (
-
-            data_hora,
-            local,
-            modelo,
-            tipo,
-            paper,
-            serie,
-            ip,
-            status_rede,
-            status_geral,
-            suprimentos,
-            status_suprimentos
-
-        )
-
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-
-        data_hora,
-
-        impressora["local"],
-
-        impressora["modelo"],
-
-        impressora["tipo"],
-
-        impressora["paper"],
-
-        impressora["serie"],
-
-        impressora["ip"],
-
-        impressora["status_rede"],
-
-        impressora["status_geral"],
-
-        json.dumps(
-            impressora["suprimentos"],
-            ensure_ascii=False
-        ),
-
-        json.dumps(
-            impressora["status_suprimentos"],
-            ensure_ascii=False
-        )
-    ))
-
-    conexao.commit()
-
-    conexao.close()
-
-
-# ================================================================
-# CARREGA AS IMPRESSORAS DO EXCEL
+# CARREGA AS IMPRESSORAS DO CADASTRO
 # ================================================================
 
 def carregar_impressoras():
 
-    print("\nLendo a planilha...")
+    print("\nLendo o cadastro de impressoras...")
 
-    df = pd.read_excel(
+    conexao = conectar()
 
-        ARQUIVO_EXCEL,
-
-        sheet_name="Impressoras ativas",
-
-        header=1
+    cadastro = buscar_impressoras(
+        conexao
     )
 
-    # ------------------------------------------------------------
-    # Mantém somente as 6 colunas utilizadas
-    # ------------------------------------------------------------
-
-    df = df.iloc[:, :6]
-
-    # ------------------------------------------------------------
-    # Padroniza os nomes
-    # ------------------------------------------------------------
-
-    df.columns = [
-
-        "local",
-        "modelo",
-        "tipo",
-        "paper",
-        "serie",
-        "ip"
-    ]
-
-    # ------------------------------------------------------------
-    # Limpa os dados
-    # ------------------------------------------------------------
-
-    for coluna in df.columns:
-
-        df[coluna] = (
-
-            df[coluna]
-
-            .fillna("")
-
-            .astype(str)
-
-            .str.strip()
-        )
-
-    # ------------------------------------------------------------
-    # Remove linhas sem local ou IP
-    # ------------------------------------------------------------
-
-    df = df[
-
-        (df["local"] != "") &
-
-        (df["ip"] != "")
-    ]
+    conexao.close()
 
     impressoras = []
 
@@ -207,23 +61,21 @@ def carregar_impressoras():
     # PROCESSA CADA IMPRESSORA
     # ============================================================
 
-    for _, linha in df.iterrows():
+    for linha in cadastro:
 
         tipo = str(
             linha["tipo"]
         ).strip().upper()
 
         # --------------------------------------------------------
-        # Suprimentos
+        # Dados coletados da impressora
         # --------------------------------------------------------
 
-        suprimentos = gerar_suprimentos(tipo)
+        dados = coletar(linha)
 
-        # --------------------------------------------------------
-        # Status da rede
-        # --------------------------------------------------------
+        suprimentos = dados["suprimentos"]
 
-        status_rede = simular_status_rede()
+        status_rede = dados["status_rede"]
 
         # --------------------------------------------------------
         # Classificação dos suprimentos
@@ -313,7 +165,16 @@ def executar_verificacao():
         f"\nImpressoras encontradas: {total}"
     )
 
+    if total == 0:
+
+        print(
+            "[AVISO] Nenhuma impressora cadastrada. "
+            "Execute: python importar_planilha.py"
+        )
+
     contador = 0
+
+    conexao = conectar()
 
     # ============================================================
     # SALVA CADA IMPRESSORA
@@ -321,7 +182,10 @@ def executar_verificacao():
 
     for impressora in impressoras:
 
-        salvar_medicao(impressora)
+        salvar_medicao(
+            conexao,
+            impressora
+        )
 
         contador += 1
 
@@ -332,6 +196,8 @@ def executar_verificacao():
             f"{impressora['status_rede']} - "
             f"{impressora['status_geral']}"
         )
+
+    conexao.close()
 
     print("\n" + "-" * 60)
 
@@ -349,7 +215,11 @@ def executar_verificacao():
 
 def iniciar_monitoramento():
 
-    criar_banco()
+    conexao = conectar()
+
+    criar_tabelas(conexao)
+
+    conexao.close()
 
     print("\n" + "=" * 60)
 
@@ -359,7 +229,7 @@ def iniciar_monitoramento():
 
     print(
         "\nIntervalo configurado: "
-        "10 minutos"
+        f"{INTERVALO_COLETA // 60} minutos"
     )
 
     print(
@@ -379,11 +249,11 @@ def iniciar_monitoramento():
 
             print(
                 "\nPróxima verificação em "
-                "10 minutos..."
+                f"{INTERVALO_COLETA // 60} minutos..."
             )
 
             time.sleep(
-                INTERVALO_SEGUNDOS
+                INTERVALO_COLETA
             )
 
         except KeyboardInterrupt:
@@ -408,7 +278,7 @@ def iniciar_monitoramento():
             )
 
             time.sleep(
-                INTERVALO_SEGUNDOS
+                INTERVALO_COLETA
             )
 
 

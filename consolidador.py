@@ -1,64 +1,17 @@
-import sqlite3
 import json
 from datetime import datetime
 
-
-# ================================================================
-# CONFIGURAÇÕES
-# ================================================================
-
-BANCO_DADOS = "impressoras.db"
-
-
-# ================================================================
-# CONECTA AO BANCO
-# ================================================================
-
-def conectar_banco():
-    return sqlite3.connect(BANCO_DADOS)
-
-
-# ================================================================
-# GARANTE QUE A TABELA EXISTE
-# ================================================================
-
-def criar_tabela_consolidacao(conexao):
-
-    cursor = conexao.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS consolidacao_diaria (
-
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            data TEXT NOT NULL,
-
-            local TEXT,
-
-            ip TEXT,
-
-            modelo TEXT,
-
-            total_medicoes INTEGER DEFAULT 0,
-
-            online INTEGER DEFAULT 0,
-
-            offline INTEGER DEFAULT 0,
-
-            criticas INTEGER DEFAULT 0,
-
-            atencoes INTEGER DEFAULT 0,
-
-            normais INTEGER DEFAULT 0,
-
-            consumo_medio REAL DEFAULT 0,
-
-            ultima_medicao TEXT
-
-        )
-    """)
-
-    conexao.commit()
+from banco import (
+    conectar,
+    tabela_existe,
+    contar_registros,
+    criar_tabela_consolidacao,
+    buscar_dias_historico,
+    buscar_impressoras_do_dia,
+    buscar_medicoes_do_dia,
+    salvar_consolidacao,
+    buscar_consolidacoes
+)
 
 
 # ================================================================
@@ -187,82 +140,12 @@ def contar_status_suprimentos(registros):
 
 
 # ================================================================
-# BUSCA OS DIAS EXISTENTES NO HISTÓRICO
-# ================================================================
-
-def obter_dias(conexao):
-
-    cursor = conexao.cursor()
-
-    cursor.execute("""
-        SELECT DISTINCT substr(data_hora, 1, 10)
-        FROM historico_impressoras
-        WHERE data_hora IS NOT NULL
-        ORDER BY data_hora
-    """)
-
-    return [
-        registro[0]
-        for registro in cursor.fetchall()
-        if registro[0]
-    ]
-
-
-# ================================================================
-# BUSCA AS IMPRESSORAS
-# ================================================================
-
-def obter_impressoras(conexao, data):
-
-    cursor = conexao.cursor()
-
-    cursor.execute("""
-        SELECT DISTINCT
-            local,
-            ip,
-            modelo
-        FROM historico_impressoras
-        WHERE substr(data_hora, 1, 10) = ?
-        ORDER BY local
-    """, (data,))
-
-    return cursor.fetchall()
-
-
-# ================================================================
-# BUSCA MEDIÇÕES DE UMA IMPRESSORA
-# ================================================================
-
-def obter_medicoes(conexao, data, ip):
-
-    cursor = conexao.cursor()
-
-    cursor.execute("""
-        SELECT
-            id,
-            data_hora,
-            local,
-            modelo,
-            status_rede,
-            status_geral,
-            suprimentos,
-            status_suprimentos
-        FROM historico_impressoras
-        WHERE substr(data_hora, 1, 10) = ?
-        AND ip = ?
-        ORDER BY data_hora ASC
-    """, (data, ip))
-
-    return cursor.fetchall()
-
-
-# ================================================================
 # CONSOLIDA UMA IMPRESSORA
 # ================================================================
 
 def consolidar_impressora(conexao, data, local, ip, modelo):
 
-    registros = obter_medicoes(
+    registros = buscar_medicoes_do_dia(
         conexao,
         data,
         ip
@@ -338,93 +221,37 @@ def consolidar_impressora(conexao, data, local, ip, modelo):
     ultima_medicao = registros[-1][1]
 
     # ------------------------------------------------------------
-    # VERIFICA SE JÁ EXISTE CONSOLIDAÇÃO
+    # SALVA A CONSOLIDAÇÃO
     # ------------------------------------------------------------
+    # Se o dia já foi consolidado, o registro é atualizado.
+    # Caso contrário, um novo registro é criado.
 
-    cursor = conexao.cursor()
+    salvar_consolidacao(conexao, {
 
-    cursor.execute("""
-        SELECT id
-        FROM consolidacao_diaria
-        WHERE data = ?
-        AND ip = ?
-        LIMIT 1
-    """, (data, ip))
+        "data": data,
 
-    existente = cursor.fetchone()
+        "local": local,
 
-    # ------------------------------------------------------------
-    # ATUALIZA REGISTRO EXISTENTE
-    # ------------------------------------------------------------
+        "ip": ip,
 
-    if existente:
+        "modelo": modelo,
 
-        cursor.execute("""
-            UPDATE consolidacao_diaria
-            SET
-                local = ?,
-                modelo = ?,
-                total_medicoes = ?,
-                online = ?,
-                offline = ?,
-                criticas = ?,
-                atencoes = ?,
-                normais = ?,
-                consumo_medio = ?,
-                ultima_medicao = ?
-            WHERE id = ?
-        """, (
-            local,
-            modelo,
-            total_medicoes,
-            online,
-            offline,
-            criticas,
-            atencoes,
-            normais,
-            consumo_medio,
-            ultima_medicao,
-            existente[0]
-        ))
+        "total_medicoes": total_medicoes,
 
-    # ------------------------------------------------------------
-    # INSERE NOVO REGISTRO
-    # ------------------------------------------------------------
+        "online": online,
 
-    else:
+        "offline": offline,
 
-        cursor.execute("""
-            INSERT INTO consolidacao_diaria (
-                data,
-                local,
-                ip,
-                modelo,
-                total_medicoes,
-                online,
-                offline,
-                criticas,
-                atencoes,
-                normais,
-                consumo_medio,
-                ultima_medicao
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            data,
-            local,
-            ip,
-            modelo,
-            total_medicoes,
-            online,
-            offline,
-            criticas,
-            atencoes,
-            normais,
-            consumo_medio,
-            ultima_medicao
-        ))
+        "criticas": criticas,
 
-    conexao.commit()
+        "atencoes": atencoes,
+
+        "normais": normais,
+
+        "consumo_medio": consumo_medio,
+
+        "ultima_medicao": ultima_medicao
+    })
 
     return True
 
@@ -435,7 +262,7 @@ def consolidar_impressora(conexao, data, local, ip, modelo):
 
 def consolidar_dia(conexao, data):
 
-    impressoras = obter_impressoras(
+    impressoras = buscar_impressoras_do_dia(
         conexao,
         data
     )
@@ -464,27 +291,9 @@ def consolidar_dia(conexao, data):
 
 def mostrar_resultados(conexao):
 
-    cursor = conexao.cursor()
-
-    cursor.execute("""
-        SELECT
-            data,
-            local,
-            ip,
-            modelo,
-            total_medicoes,
-            online,
-            offline,
-            criticas,
-            atencoes,
-            normais,
-            consumo_medio,
-            ultima_medicao
-        FROM consolidacao_diaria
-        ORDER BY data DESC, local
-    """)
-
-    registros = cursor.fetchall()
+    registros = buscar_consolidacoes(
+        conexao
+    )
 
     print("\n" + "=" * 60)
     print(" RESULTADOS DA CONSOLIDAÇÃO")
@@ -550,7 +359,7 @@ def main():
 
     try:
 
-        conexao = conectar_banco()
+        conexao = conectar()
 
         print(
             "\n[OK] Conexão com o banco realizada com sucesso."
@@ -572,16 +381,10 @@ def main():
         # VERIFICA HISTÓRICO
         # --------------------------------------------------------
 
-        cursor = conexao.cursor()
-
-        cursor.execute("""
-            SELECT name
-            FROM sqlite_master
-            WHERE type = 'table'
-            AND name = 'historico_impressoras'
-        """)
-
-        if not cursor.fetchone():
+        if not tabela_existe(
+            conexao,
+            "historico_impressoras"
+        ):
 
             print(
                 "[ERRO] Tabela "
@@ -613,7 +416,7 @@ def main():
         # OBTÉM OS DIAS
         # --------------------------------------------------------
 
-        dias = obter_dias(
+        dias = buscar_dias_historico(
             conexao
         )
 
@@ -671,12 +474,10 @@ def main():
         # VERIFICA HISTÓRICO ORIGINAL
         # --------------------------------------------------------
 
-        cursor.execute("""
-            SELECT COUNT(*)
-            FROM historico_impressoras
-        """)
-
-        total_historico = cursor.fetchone()[0]
+        total_historico = contar_registros(
+            conexao,
+            "historico_impressoras"
+        )
 
         print("\n" + "=" * 60)
         print(" VERIFICAÇÃO FINAL")

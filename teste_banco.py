@@ -1,8 +1,13 @@
-import sqlite3
 import json
 
-
-BANCO_DADOS = "impressoras.db"
+from banco import (
+    conectar,
+    tabela_existe,
+    contar_registros,
+    contar_impressoras_registradas,
+    buscar_medicoes_recentes,
+    buscar_ultima_medicao_completa
+)
 
 
 print("=" * 60)
@@ -16,9 +21,7 @@ print("=" * 60)
 
 try:
 
-    conexao = sqlite3.connect(BANCO_DADOS)
-
-    cursor = conexao.cursor()
+    conexao = conectar()
 
     print("\n[OK] Conexão com o banco realizada com sucesso.")
 
@@ -36,14 +39,10 @@ except Exception as erro:
 # VERIFICA SE A TABELA EXISTE
 # ================================================================
 
-cursor.execute("""
-    SELECT name
-    FROM sqlite_master
-    WHERE type='table'
-    AND name='historico_impressoras'
-""")
-
-tabela = cursor.fetchone()
+tabela = tabela_existe(
+    conexao,
+    "historico_impressoras"
+)
 
 
 if tabela:
@@ -63,12 +62,10 @@ else:
 # CONTA OS REGISTROS
 # ================================================================
 
-cursor.execute("""
-    SELECT COUNT(*)
-    FROM historico_impressoras
-""")
-
-total_registros = cursor.fetchone()[0]
+total_registros = contar_registros(
+    conexao,
+    "historico_impressoras"
+)
 
 
 print(f"[OK] Total de registros no banco: {total_registros}")
@@ -78,12 +75,9 @@ print(f"[OK] Total de registros no banco: {total_registros}")
 # CONTA IMPRESSORAS DIFERENTES
 # ================================================================
 
-cursor.execute("""
-    SELECT COUNT(DISTINCT ip)
-    FROM historico_impressoras
-""")
-
-total_impressoras = cursor.fetchone()[0]
+total_impressoras = contar_impressoras_registradas(
+    conexao
+)
 
 
 print(
@@ -101,21 +95,10 @@ print(" ÚLTIMAS 5 MEDIÇÕES")
 print("=" * 60)
 
 
-cursor.execute("""
-    SELECT
-        data_hora,
-        local,
-        modelo,
-        ip,
-        status_rede,
-        status_geral
-    FROM historico_impressoras
-    ORDER BY id DESC
-    LIMIT 5
-""")
-
-
-registros = cursor.fetchall()
+registros = buscar_medicoes_recentes(
+    conexao,
+    limite=5
+)
 
 
 if not registros:
@@ -151,19 +134,9 @@ print(" EXEMPLO DE SUPRIMENTOS ARMAZENADOS")
 print("=" * 60)
 
 
-cursor.execute("""
-    SELECT
-        local,
-        ip,
-        suprimentos,
-        status_suprimentos
-    FROM historico_impressoras
-    ORDER BY id DESC
-    LIMIT 1
-""")
-
-
-registro = cursor.fetchone()
+registro = buscar_ultima_medicao_completa(
+    conexao
+)
 
 
 if registro:

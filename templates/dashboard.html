@@ -6,7 +6,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-```
 <title>Monitoramento de Impressoras</title>
 
 <style>
@@ -786,13 +785,11 @@
     }
 
 </style>
-```
 
 </head>
 
 <body>
 
-```
 <header class="cabecalho">
 
     <div class="topo">
@@ -1069,6 +1066,7 @@
 
                 <p>
                     Informações consolidadas a partir do histórico das impressoras.
+                    Os números abaixo contam medições de todo o período, não impressoras.
                 </p>
 
             </div>
@@ -1089,7 +1087,7 @@
                 </div>
 
                 <div class="indicador-legenda">
-                    Registros por impressora e dia
+                    Um registro por impressora em cada dia
                 </div>
 
             </div>
@@ -1106,7 +1104,7 @@
                 </div>
 
                 <div class="indicador-legenda">
-                    Média das medições consolidadas
+                    Queda média dos suprimentos entre medições
                 </div>
 
             </div>
@@ -1115,7 +1113,7 @@
             <div class="indicador">
 
                 <div class="indicador-titulo">
-                    Críticas
+                    Medições críticas
                 </div>
 
                 <div class="indicador-valor">
@@ -1123,7 +1121,7 @@
                 </div>
 
                 <div class="indicador-legenda">
-                    Ocorrências de nível crítico
+                    Ocorrências no período, não impressoras
                 </div>
 
             </div>
@@ -1132,7 +1130,7 @@
             <div class="indicador">
 
                 <div class="indicador-titulo">
-                    Atenção
+                    Medições em atenção
                 </div>
 
                 <div class="indicador-valor">
@@ -1140,7 +1138,7 @@
                 </div>
 
                 <div class="indicador-legenda">
-                    Ocorrências de atenção
+                    Ocorrências no período, não impressoras
                 </div>
 
             </div>
@@ -1170,7 +1168,7 @@
                 </div>
 
                 <div class="indicador-legenda">
-                    Percentual de medições online
+                    Percentual de medições online no período
                 </div>
 
             </div>
@@ -2582,7 +2580,7 @@
        A página será recarregada a cada 50 segundos.
     ========================================================== */
 
-    let segundosParaAtualizar = 50;
+    let segundosParaAtualizar = {{ intervalo_atualizacao }};
 
 
     const contadorAtualizacao =
@@ -2653,7 +2651,6 @@
         );
 
 </script>
-```
 
 </body>
 
