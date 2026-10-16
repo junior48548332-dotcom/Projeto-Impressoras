@@ -220,7 +220,7 @@ Uma linha por impressora por dia.
 
 - [x] Separar o CSS do dashboard em `static/css/dashboard.css`
 - [x] Separar o JavaScript do dashboard em `static/js/dashboard.js`
-- [ ] Criar rota `GET /api/impressoras` retornando JSON
+- [x] Criar rota `GET /api/impressoras` retornando JSON
 - [ ] Criar rota `GET /api/analise` retornando JSON
 - [ ] Fazer o JavaScript buscar os dados na API (`fetch`) em vez de lê-los embutidos no HTML
 - [ ] Atualizar só os dados na tela, sem recarregar a página inteira a cada 50 segundos

@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 import json
 
 from config import (
@@ -23,6 +23,9 @@ from banco import (
 
 
 app = Flask(__name__)
+
+# Mantém os acentos legíveis nas respostas da API
+app.json.ensure_ascii = False
 
 
 # ================================================================
@@ -413,29 +416,18 @@ def carregar_analise():
 
 
 # ================================================================
-# ROTA PRINCIPAL
+# CONTADORES E ÚLTIMA ATUALIZAÇÃO
 # ================================================================
 
-@app.route("/")
-def dashboard():
+def contar_status(impressoras):
 
-    impressoras = carregar_impressoras()
-
-
-    # ------------------------------------------------------------
-    # CONTADORES DA DASHBOARD
-    # ------------------------------------------------------------
-
-    total = len(impressoras)
-
-    online = 0
-
-    offline = 0
-
-    atencao = 0
-
-    criticas = 0
-
+    resumo = {
+        "total": len(impressoras),
+        "online": 0,
+        "offline": 0,
+        "atencao": 0,
+        "criticas": 0
+    }
 
     for impressora in impressoras:
 
@@ -446,7 +438,6 @@ def dashboard():
             )
         ).lower()
 
-
         status_geral = str(
             impressora.get(
                 "status_geral",
@@ -454,31 +445,26 @@ def dashboard():
             )
         ).lower()
 
-
         if status_rede == "online":
 
-            online += 1
+            resumo["online"] += 1
 
         elif status_rede == "offline":
 
-            offline += 1
-
+            resumo["offline"] += 1
 
         if status_geral == "critico":
 
-            criticas += 1
+            resumo["criticas"] += 1
 
         elif status_geral == "atencao":
 
-            atencao += 1
+            resumo["atencao"] += 1
+
+    return resumo
 
 
-    # ------------------------------------------------------------
-    # ÚLTIMA ATUALIZAÇÃO
-    # ------------------------------------------------------------
-
-    ultima_atualizacao = None
-
+def obter_ultima_atualizacao():
 
     try:
 
@@ -488,9 +474,9 @@ def dashboard():
             conexao
         )
 
-
         conexao.close()
 
+        return ultima_atualizacao
 
     except Exception as erro:
 
@@ -498,6 +484,27 @@ def dashboard():
             f"[ERRO] Erro ao obter última atualização: "
             f"{erro}"
         )
+
+        return None
+
+
+# ================================================================
+# ROTA PRINCIPAL
+# ================================================================
+
+@app.route("/")
+def dashboard():
+
+    impressoras = carregar_impressoras()
+
+
+    # ------------------------------------------------------------
+    # CONTADORES E ÚLTIMA ATUALIZAÇÃO
+    # ------------------------------------------------------------
+
+    resumo = contar_status(impressoras)
+
+    ultima_atualizacao = obter_ultima_atualizacao()
 
 
     # ------------------------------------------------------------
@@ -517,15 +524,15 @@ def dashboard():
 
         impressoras=impressoras,
 
-        total=total,
+        total=resumo["total"],
 
-        online=online,
+        online=resumo["online"],
 
-        offline=offline,
+        offline=resumo["offline"],
 
-        atencao=atencao,
+        atencao=resumo["atencao"],
 
-        criticas=criticas,
+        criticas=resumo["criticas"],
 
         ultima_atualizacao=ultima_atualizacao,
 
@@ -533,6 +540,47 @@ def dashboard():
 
         intervalo_atualizacao=INTERVALO_ATUALIZACAO_DASHBOARD
     )
+
+
+# ================================================================
+# ROTAS DA API
+# ================================================================
+#
+# Devolvem os mesmos dados do dashboard em formato JSON, para
+# que o JavaScript da página (ou outro sistema) possa consultar
+# sem recarregar a tela.
+
+
+@app.route("/api/impressoras")
+def api_impressoras():
+    """
+    Situação atual de todas as impressoras.
+
+    Exemplo de resposta:
+
+    {
+        "atualizado_em": "2026-10-16 09:30:00",
+        "resumo": {
+            "total": 48,
+            "online": 46,
+            "offline": 2,
+            "atencao": 4,
+            "criticas": 11
+        },
+        "impressoras": [ ... ]
+    }
+    """
+
+    impressoras = carregar_impressoras()
+
+    return jsonify({
+
+        "atualizado_em": obter_ultima_atualizacao(),
+
+        "resumo": contar_status(impressoras),
+
+        "impressoras": impressoras
+    })
 
 
 # ================================================================
