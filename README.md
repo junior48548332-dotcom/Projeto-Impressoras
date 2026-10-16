@@ -71,7 +71,10 @@ Projeto-Impressoras/
 ├── consolidador.py         # Resumo diário do histórico
 ├── impressoras.xlsx        # Cadastro das impressoras
 ├── templates/
-│   └── dashboard.html      # Interface (HTML + CSS + JavaScript)
+│   └── dashboard.html      # Interface (HTML e JavaScript)
+├── static/
+│   └── css/
+│       └── dashboard.css   # Estilos do dashboard
 ├── teste_banco.py          # Verificação manual do banco
 ├── teste_consolidacao.py   # Verificação manual da tabela de consolidação
 ├── teste_contagem.py       # Confere a contagem de status
@@ -213,7 +216,7 @@ Uma linha por impressora por dia.
 
 ### Etapa 3 — API
 
-- [ ] Separar o CSS do dashboard em `static/css/dashboard.css`
+- [x] Separar o CSS do dashboard em `static/css/dashboard.css`
 - [ ] Separar o JavaScript do dashboard em `static/js/dashboard.js`
 - [ ] Criar rota `GET /api/impressoras` retornando JSON
 - [ ] Criar rota `GET /api/analise` retornando JSON
