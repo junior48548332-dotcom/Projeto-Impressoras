@@ -583,6 +583,34 @@ def api_impressoras():
     })
 
 
+@app.route("/api/analise")
+def api_analise():
+    """
+    Dados consolidados do histórico, usados na aba Análise.
+
+    Os totais contam medições do período inteiro, não impressoras.
+
+    Exemplo de resposta:
+
+    {
+        "total_registros": 48,
+        "consumo_medio": 2.34,
+        "total_criticas": 18,
+        "total_atencoes": 11,
+        "total_normais": 67,
+        "total_online": 93,
+        "total_offline": 3,
+        "setores": [ {"local": "Diretoria", "consumo": 3.5} ],
+        "top_impressoras": [ ... ],
+        "evolucao": [ {"data": "2026-10-16", "consumo": 2.1} ]
+    }
+    """
+
+    return jsonify(
+        carregar_analise()
+    )
+
+
 # ================================================================
 # EXECUÇÃO
 # ================================================================
