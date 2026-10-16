@@ -71,10 +71,12 @@ Projeto-Impressoras/
 ├── consolidador.py         # Resumo diário do histórico
 ├── impressoras.xlsx        # Cadastro das impressoras
 ├── templates/
-│   └── dashboard.html      # Interface (HTML e JavaScript)
+│   └── dashboard.html      # Estrutura da página (HTML)
 ├── static/
-│   └── css/
-│       └── dashboard.css   # Estilos do dashboard
+│   ├── css/
+│   │   └── dashboard.css   # Estilos do dashboard
+│   └── js/
+│       └── dashboard.js    # Comportamento da página (JavaScript)
 ├── teste_banco.py          # Verificação manual do banco
 ├── teste_consolidacao.py   # Verificação manual da tabela de consolidação
 ├── teste_contagem.py       # Confere a contagem de status
@@ -177,7 +179,7 @@ Uma linha por impressora por dia.
 |---|---|---|
 | Framework web | Concluído | Flask (`app.py`) |
 | Banco de dados | Concluído | SQLite (`banco.py`) |
-| Script web (JavaScript) | Concluído | `templates/dashboard.html` |
+| Script web (JavaScript) | Concluído | `static/js/dashboard.js` |
 | Controle de versão | Concluído | Git + GitHub |
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
 | Testes | Em andamento | Existem verificações manuais; faltam testes automatizados |
@@ -217,7 +219,7 @@ Uma linha por impressora por dia.
 ### Etapa 3 — API
 
 - [x] Separar o CSS do dashboard em `static/css/dashboard.css`
-- [ ] Separar o JavaScript do dashboard em `static/js/dashboard.js`
+- [x] Separar o JavaScript do dashboard em `static/js/dashboard.js`
 - [ ] Criar rota `GET /api/impressoras` retornando JSON
 - [ ] Criar rota `GET /api/analise` retornando JSON
 - [ ] Fazer o JavaScript buscar os dados na API (`fetch`) em vez de lê-los embutidos no HTML
