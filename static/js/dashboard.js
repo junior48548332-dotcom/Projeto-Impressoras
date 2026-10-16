@@ -1,9 +1,12 @@
-const impressoras =
-    JSON.parse(
-        document.getElementById(
-            "dados-impressoras"
-        ).textContent
-    );
+/* =========================================================
+   DADOS DAS IMPRESSORAS
+
+   A lista começa vazia e é preenchida pela API.
+   Enquanto ela não chega, a página mostra o que o
+   servidor já montou no HTML.
+========================================================== */
+
+let impressoras = [];
 
 
 const configuracao =
@@ -12,6 +15,61 @@ const configuracao =
             "config-dashboard"
         ).textContent
     );
+
+
+/* =========================================================
+   BUSCA NA API
+========================================================== */
+
+async function buscarNaApi(endereco) {
+
+    const resposta =
+        await fetch(endereco);
+
+
+    if (!resposta.ok) {
+
+        throw new Error(
+            "Resposta " +
+            resposta.status +
+            " de " +
+            endereco
+        );
+    }
+
+
+    return resposta.json();
+}
+
+
+async function carregarImpressoras() {
+
+    try {
+
+        const dados =
+            await buscarNaApi(
+                configuracao.api_impressoras
+            );
+
+
+        impressoras = dados.impressoras;
+
+
+        atualizarStatusSistema();
+
+
+        return dados;
+
+    } catch (erro) {
+
+        console.error(
+            "Não foi possível buscar os dados das impressoras:",
+            erro
+        );
+
+        return null;
+    }
+}
 
 
 /* =========================================================
@@ -323,7 +381,7 @@ function atualizarStatusSistema() {
 }
 
 
-atualizarStatusSistema();
+carregarImpressoras();
 
 
 /* =========================================================

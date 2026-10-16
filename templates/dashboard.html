@@ -879,23 +879,21 @@
 
 
 <!-- =========================================================
-     DADOS DAS IMPRESSORAS
+     CONFIGURAÇÃO DA PÁGINA
+
+     O JavaScript lê estes valores e busca os dados
+     das impressoras nas rotas da API.
 ========================================================== -->
 
 <script
     id="config-dashboard"
     type="application/json">
 
-    {"intervalo_atualizacao": {{ intervalo_atualizacao }}}
-
-</script>
-
-
-<script
-    id="dados-impressoras"
-    type="application/json">
-
-    {{ impressoras | tojson | safe }}
+    {
+        "intervalo_atualizacao": {{ intervalo_atualizacao }},
+        "api_impressoras": "{{ url_for('api_impressoras') }}",
+        "api_analise": "{{ url_for('api_analise') }}"
+    }
 
 </script>
 
