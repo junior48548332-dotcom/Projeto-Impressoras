@@ -79,7 +79,8 @@ Projeto-Impressoras/
 │   └── js/
 │       └── dashboard.js    # Comportamento da página (JavaScript)
 ├── tests/
-│   └── test_projeto.py     # Testes automatizados (pytest)
+│   ├── test_projeto.py     # Testes de estrutura do projeto
+│   └── test_classificacao.py  # Testes da classificação dos suprimentos
 ├── pytest.ini              # Configuração do pytest
 ├── teste_banco.py          # Verificação manual do banco
 ├── teste_consolidacao.py   # Verificação manual da tabela de consolidação
@@ -345,7 +346,7 @@ Dados consolidados do histórico, usados na aba Análise.
 ### Etapa 4 — Testes automatizados
 
 - [x] Configurar o pytest e criar a pasta `tests/`
-- [ ] Testar a classificação dos suprimentos (`classificar_nivel`)
+- [x] Testar a classificação dos suprimentos (`classificar_nivel`)
 - [ ] Testar o cálculo de consumo (`calcular_consumo`)
 - [ ] Testar as funções de `banco.py`
 - [ ] Testar as rotas da API e do dashboard
