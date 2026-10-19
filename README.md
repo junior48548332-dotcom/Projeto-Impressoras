@@ -36,6 +36,7 @@ flowchart LR
     H --> A
     D --> A
     A --> W[dashboard.html<br/>navegador]
+    W -->|fetch a cada 50s| A
 ```
 
 1. **Cadastro:** a planilha `impressoras.xlsx` lista as impressoras ativas (local, modelo, tipo, papel, nº de série e IP). O `importar_planilha.py` copia esse cadastro para a tabela `impressoras` do banco, que é de onde o resto do sistema lê.
@@ -173,6 +174,118 @@ Uma linha por impressora por dia.
 
 ---
 
+## API
+
+O sistema oferece duas rotas que devolvem os dados em **JSON**. São elas que alimentam o dashboard: o JavaScript da página consulta essas rotas a cada 50 segundos e atualiza os valores na tela, sem recarregar a página.
+
+Com o servidor rodando, dá para abrir as duas direto no navegador.
+
+### `GET /api/impressoras`
+
+Situação atual de todas as impressoras: o cadastro somado à última medição de cada uma.
+
+```json
+{
+  "atualizado_em": "2026-10-19 09:56:18",
+  "resumo": {
+    "total": 48,
+    "online": 45,
+    "offline": 3,
+    "atencao": 11,
+    "criticas": 6
+  },
+  "impressoras": [
+    {
+      "local": "Diretoria",
+      "modelo": "CX950",
+      "tipo": "COLOR",
+      "paper": "A3 / A4",
+      "serie": "0123ABCD0123",
+      "ip": "192.168.0.2",
+      "status_rede": "online",
+      "status_geral": "atencao",
+      "suprimentos": {
+        "toner_preto": 54,
+        "toner_ciano": 18,
+        "toner_magenta": 72,
+        "toner_amarelo": 61,
+        "unidade_imagem": 88
+      },
+      "status_suprimentos": {
+        "toner_preto": "normal",
+        "toner_ciano": "atencao",
+        "toner_magenta": "normal",
+        "toner_amarelo": "normal",
+        "unidade_imagem": "normal"
+      },
+      "data_hora": "2026-10-19 09:56:18"
+    }
+  ]
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `atualizado_em` | Data e hora da medição mais recente, ou `null` se ainda não houver nenhuma |
+| `resumo` | Contadores prontos, iguais aos exibidos no topo do dashboard |
+| `impressoras` | Uma entrada por impressora cadastrada, na ordem da planilha |
+| `status_rede` | `online`, `offline` ou `desconhecido` (quando a impressora ainda não foi medida) |
+| `status_geral` | `normal`, `atencao` ou `critico` (o pior status entre os suprimentos) |
+| `suprimentos` | Percentual de cada suprimento |
+| `status_suprimentos` | Classificação de cada suprimento |
+
+### `GET /api/analise`
+
+Dados consolidados do histórico, usados na aba Análise.
+
+```json
+{
+  "total_registros": 96,
+  "consumo_medio": 2.336805555555556,
+  "total_criticas": 24,
+  "total_atencoes": 11,
+  "total_normais": 67,
+  "total_online": 93,
+  "total_offline": 3,
+  "setores": [
+    { "local": "Carregamento", "consumo": 5.5 }
+  ],
+  "top_impressoras": [
+    {
+      "local": "Carregamento",
+      "ip": "192.168.0.45",
+      "modelo": "MS812",
+      "consumo": 5.5,
+      "medicoes": 2
+    }
+  ],
+  "evolucao": [
+    { "data": "2026-10-19", "consumo": 2.34 }
+  ]
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `total_registros` | Linhas na consolidação (uma por impressora em cada dia) |
+| `consumo_medio` | Queda média dos suprimentos entre medições, em pontos percentuais |
+| `total_criticas`, `total_atencoes`, `total_normais` | Quantidade de **medições** em cada status no período |
+| `total_online`, `total_offline` | Quantidade de **medições** em cada estado de rede |
+| `setores` | Consumo médio por local, do maior para o menor |
+| `top_impressoras` | As 10 impressoras de maior consumo |
+| `evolucao` | Consumo médio de cada dia |
+
+> Os totais desta rota contam **medições do período inteiro**, não impressoras. Para saber quantas impressoras estão críticas agora, use o `resumo` de `/api/impressoras`.
+
+### Observações
+
+- As duas rotas respondem apenas a `GET` e não exigem autenticação, por rodarem na rede interna.
+- As datas seguem o formato `AAAA-MM-DD HH:MM:SS`.
+- Os números vêm sem arredondamento; quem exibe decide como formatar.
+- Se a planilha ainda não tiver sido importada, `/api/impressoras` devolve a lista vazia e o resumo zerado.
+
+---
+
 ## Requisitos do PI
 
 | Requisito | Situação | Onde está |
@@ -183,7 +296,7 @@ Uma linha por impressora por dia.
 | Controle de versão | Concluído | Git + GitHub |
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
 | Testes | Em andamento | Existem verificações manuais; faltam testes automatizados |
-| Uso de API | Pendente | Etapa 3 |
+| Uso de API | Concluído | Rotas `/api/impressoras` e `/api/analise` (`app.py`) |
 | Acessibilidade | Pendente | Etapa 5 |
 | Nuvem | Pendente | Etapa 6 |
 
@@ -223,8 +336,8 @@ Uma linha por impressora por dia.
 - [x] Criar rota `GET /api/impressoras` retornando JSON
 - [x] Criar rota `GET /api/analise` retornando JSON
 - [x] Fazer o JavaScript buscar os dados na API (`fetch`) em vez de lê-los embutidos no HTML
-- [ ] Atualizar só os dados na tela, sem recarregar a página inteira a cada 50 segundos
-- [ ] Documentar as rotas da API neste README
+- [x] Atualizar só os dados na tela, sem recarregar a página inteira a cada 50 segundos
+- [x] Documentar as rotas da API neste README
 
 ### Etapa 4 — Testes automatizados
 

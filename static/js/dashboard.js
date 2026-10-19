@@ -8,6 +8,9 @@
 
 let impressoras = [];
 
+// filtro escolhido pelo usuário (todos, online, offline, atencao, critico)
+let filtroAtual = "todos";
+
 
 const configuracao =
     JSON.parse(
@@ -52,10 +55,7 @@ async function carregarImpressoras() {
             );
 
 
-        impressoras = dados.impressoras;
-
-
-        atualizarStatusSistema();
+        aplicarDados(dados);
 
 
         return dados;
@@ -69,6 +69,247 @@ async function carregarImpressoras() {
 
         return null;
     }
+}
+
+
+/* =========================================================
+   MONTAGEM DOS CARDS
+
+   Os cards são recriados a partir da lista vinda da API,
+   assim a tela reflete os dados mais recentes sem recarregar.
+========================================================== */
+
+function classeDoStatus(impressora) {
+
+    const rede =
+        String(impressora.status_rede || "").toLowerCase();
+
+    const geral =
+        String(impressora.status_geral || "").toLowerCase();
+
+
+    if (rede === "offline") {
+        return "offline";
+    }
+
+    if (geral === "critico") {
+        return "critico";
+    }
+
+    if (geral === "atencao") {
+        return "atencao";
+    }
+
+    return "normal";
+}
+
+
+function montarCards() {
+
+    const grid =
+        document.getElementById(
+            "gridImpressoras"
+        );
+
+
+    if (!grid) {
+        return;
+    }
+
+
+    grid.innerHTML = "";
+
+
+    impressoras.forEach(
+        function (impressora, indice) {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "impressora " +
+                classeDoStatus(impressora);
+
+            card.dataset.indice = indice;
+
+            card.dataset.rede =
+                String(impressora.status_rede || "").toLowerCase();
+
+            card.dataset.geral =
+                String(impressora.status_geral || "").toLowerCase();
+
+            card.addEventListener(
+                "click",
+                function () {
+                    abrirDetalhes(indice);
+                }
+            );
+
+
+            const nome =
+                document.createElement("div");
+
+            nome.className = "impressora-nome";
+
+            nome.textContent =
+                impressora.local || "Impressora";
+
+
+            const modelo =
+                document.createElement("div");
+
+            modelo.className = "impressora-local";
+
+            modelo.textContent =
+                impressora.modelo || "Impressora";
+
+
+            card.appendChild(nome);
+
+            card.appendChild(modelo);
+
+            grid.appendChild(card);
+        }
+    );
+}
+
+
+/* =========================================================
+   CONTADORES E CABEÇALHO
+========================================================== */
+
+function escreverTexto(id, texto) {
+
+    const elemento =
+        document.getElementById(id);
+
+
+    if (elemento) {
+        elemento.textContent = texto;
+    }
+}
+
+
+function atualizarContadores(resumo) {
+
+    if (!resumo) {
+        return;
+    }
+
+    escreverTexto("contadorTotal", resumo.total);
+    escreverTexto("contadorOnline", resumo.online);
+    escreverTexto("contadorOffline", resumo.offline);
+    escreverTexto("contadorAtencao", resumo.atencao);
+    escreverTexto("contadorCritico", resumo.criticas);
+}
+
+
+function aplicarDados(dados) {
+
+    impressoras = dados.impressoras || [];
+
+    montarCards();
+
+    atualizarContadores(dados.resumo);
+
+    escreverTexto(
+        "ultimaMedicao",
+        dados.atualizado_em || "Aguardando"
+    );
+
+    // mantém o filtro que o usuário tinha escolhido
+    filtrarImpressoras(filtroAtual);
+
+    atualizarStatusSistema();
+}
+
+
+/* =========================================================
+   INDICADORES DA ABA ANÁLISE
+========================================================== */
+
+function atualizarAnalise(analise) {
+
+    if (!analise) {
+        return;
+    }
+
+
+    escreverTexto(
+        "analiseRegistros",
+        analise.total_registros
+    );
+
+    escreverTexto(
+        "analiseConsumo",
+        Number(analise.consumo_medio || 0).toFixed(2) + "%"
+    );
+
+    escreverTexto(
+        "analiseCriticas",
+        analise.total_criticas
+    );
+
+    escreverTexto(
+        "analiseAtencoes",
+        analise.total_atencoes
+    );
+
+
+    const medicoes =
+        (analise.total_online || 0) +
+        (analise.total_offline || 0);
+
+    const disponibilidade =
+        medicoes > 0
+            ? ((analise.total_online / medicoes) * 100).toFixed(1) + "%"
+            : "0%";
+
+    escreverTexto(
+        "analiseDisponibilidade",
+        disponibilidade
+    );
+}
+
+
+async function carregarAnalise() {
+
+    try {
+
+        const analise =
+            await buscarNaApi(
+                configuracao.api_analise
+            );
+
+        atualizarAnalise(analise);
+
+        return analise;
+
+    } catch (erro) {
+
+        console.error(
+            "Não foi possível buscar a análise:",
+            erro
+        );
+
+        return null;
+    }
+}
+
+
+/* =========================================================
+   ATUALIZAÇÃO PERIÓDICA
+
+   Busca as duas rotas da API e atualiza apenas os pedaços
+   da página que mudaram.
+========================================================== */
+
+async function atualizarTudo() {
+
+    await Promise.all([
+        carregarImpressoras(),
+        carregarAnalise()
+    ]);
 }
 
 
@@ -464,6 +705,8 @@ function mostrarAba(nome) {
 ========================================================== */
 
 function filtrarImpressoras(filtro) {
+
+    filtroAtual = filtro;
 
     const cards =
         document.querySelectorAll(
@@ -977,6 +1220,8 @@ document.addEventListener(
 
 let segundosParaAtualizar = configuracao.intervalo_atualizacao;
 
+let atualizacaoEmAndamento = false;
+
 
 const contadorAtualizacao =
     document.getElementById(
@@ -992,55 +1237,66 @@ function atualizarContador() {
         return;
     }
 
-
     contadorAtualizacao.textContent =
         `🔄 Próxima atualização: ${segundosParaAtualizar}s`;
-
 }
 
 
 atualizarContador();
 
 
-const intervaloAtualizacao =
-    setInterval(
-        function () {
+setInterval(
+    function () {
 
-            segundosParaAtualizar--;
-
-
-            if (
-                segundosParaAtualizar <= 0
-            ) {
-
-                clearInterval(
-                    intervaloAtualizacao
-                );
+        if (atualizacaoEmAndamento) {
+            return;
+        }
 
 
-                contadorAtualizacao.textContent =
-                    "🔄 Atualizando...";
+        segundosParaAtualizar--;
 
 
-                contadorAtualizacao.classList.add(
-                    "atualizando"
-                );
-
-
-                setTimeout(
-                    function () {
-                        location.reload();
-                    },
-                    300
-                );
-
-
-                return;
-            }
-
+        if (
+            segundosParaAtualizar > 0
+        ) {
 
             atualizarContador();
 
-        },
-        1000
-    );
+            return;
+        }
+
+
+        // ------------------------------------------------
+        // Chegou a hora: busca os dados novos na API.
+        // A página não é recarregada, apenas os valores
+        // da tela são trocados.
+        // ------------------------------------------------
+
+        atualizacaoEmAndamento = true;
+
+        contadorAtualizacao.textContent =
+            "🔄 Atualizando...";
+
+        contadorAtualizacao.classList.add(
+            "atualizando"
+        );
+
+
+        atualizarTudo().finally(
+            function () {
+
+                contadorAtualizacao.classList.remove(
+                    "atualizando"
+                );
+
+                segundosParaAtualizar =
+                    configuracao.intervalo_atualizacao;
+
+                atualizarContador();
+
+                atualizacaoEmAndamento = false;
+            }
+        );
+    },
+    1000
+);

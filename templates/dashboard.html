@@ -58,7 +58,7 @@
 
                 Última medição:
 
-                <strong>
+                <strong id="ultimaMedicao">
                     {{ ultima_atualizacao or 'Aguardando' }}
                 </strong>
 
@@ -124,7 +124,7 @@
                     TOTAL
                 </div>
 
-                <div class="contador-numero">
+                <div class="contador-numero" id="contadorTotal">
                     {{ total }}
                 </div>
 
@@ -139,7 +139,7 @@
                     ONLINE
                 </div>
 
-                <div class="contador-numero">
+                <div class="contador-numero" id="contadorOnline">
                     {{ online }}
                 </div>
 
@@ -154,7 +154,7 @@
                     OFFLINE
                 </div>
 
-                <div class="contador-numero">
+                <div class="contador-numero" id="contadorOffline">
                     {{ offline }}
                 </div>
 
@@ -169,7 +169,7 @@
                     ATENÇÃO
                 </div>
 
-                <div class="contador-numero">
+                <div class="contador-numero" id="contadorAtencao">
                     {{ atencao }}
                 </div>
 
@@ -184,7 +184,7 @@
                     CRÍTICAS
                 </div>
 
-                <div class="contador-numero">
+                <div class="contador-numero" id="contadorCritico">
                     {{ criticas }}
                 </div>
 
@@ -306,7 +306,7 @@
                     Registros consolidados
                 </div>
 
-                <div class="indicador-valor">
+                <div class="indicador-valor" id="analiseRegistros">
                     {{ analise.total_registros }}
                 </div>
 
@@ -323,7 +323,7 @@
                     Consumo médio
                 </div>
 
-                <div class="indicador-valor">
+                <div class="indicador-valor" id="analiseConsumo">
                     {{ "%.2f"|format(analise.consumo_medio) }}%
                 </div>
 
@@ -340,7 +340,7 @@
                     Medições críticas
                 </div>
 
-                <div class="indicador-valor">
+                <div class="indicador-valor" id="analiseCriticas">
                     {{ analise.total_criticas }}
                 </div>
 
@@ -357,7 +357,7 @@
                     Medições em atenção
                 </div>
 
-                <div class="indicador-valor">
+                <div class="indicador-valor" id="analiseAtencoes">
                     {{ analise.total_atencoes }}
                 </div>
 
@@ -374,7 +374,7 @@
                     Disponibilidade
                 </div>
 
-                <div class="indicador-valor">
+                <div class="indicador-valor" id="analiseDisponibilidade">
 
                     {% if analise.total_online + analise.total_offline > 0 %}
 
