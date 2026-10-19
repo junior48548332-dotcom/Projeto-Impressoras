@@ -26,3 +26,6 @@ impressoras.db
 estado_simulacao.json
 # Workspace local do VS Code
 *.code-workspace
+
+# Cache do pytest
+.pytest_cache/

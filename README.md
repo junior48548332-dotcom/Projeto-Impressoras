@@ -78,6 +78,9 @@ Projeto-Impressoras/
 │   │   └── dashboard.css   # Estilos do dashboard
 │   └── js/
 │       └── dashboard.js    # Comportamento da página (JavaScript)
+├── tests/
+│   └── test_projeto.py     # Testes automatizados (pytest)
+├── pytest.ini              # Configuração do pytest
 ├── teste_banco.py          # Verificação manual do banco
 ├── teste_consolidacao.py   # Verificação manual da tabela de consolidação
 ├── teste_contagem.py       # Confere a contagem de status
@@ -295,7 +298,7 @@ Dados consolidados do histórico, usados na aba Análise.
 | Script web (JavaScript) | Concluído | `static/js/dashboard.js` |
 | Controle de versão | Concluído | Git + GitHub |
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
-| Testes | Em andamento | Existem verificações manuais; faltam testes automatizados |
+| Testes | Em andamento | pytest configurado em `tests/`; faltam os testes das regras |
 | Uso de API | Concluído | Rotas `/api/impressoras` e `/api/analise` (`app.py`) |
 | Acessibilidade | Pendente | Etapa 5 |
 | Nuvem | Pendente | Etapa 6 |
@@ -341,7 +344,7 @@ Dados consolidados do histórico, usados na aba Análise.
 
 ### Etapa 4 — Testes automatizados
 
-- [ ] Configurar o pytest e criar a pasta `tests/`
+- [x] Configurar o pytest e criar a pasta `tests/`
 - [ ] Testar a classificação dos suprimentos (`classificar_nivel`)
 - [ ] Testar o cálculo de consumo (`calcular_consumo`)
 - [ ] Testar as funções de `banco.py`

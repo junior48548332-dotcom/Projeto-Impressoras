@@ -1,3 +1,7 @@
+# Bibliotecas do sistema
 flask>=3.1
 pandas>=3.0
 openpyxl>=3.1
+
+# Apenas para rodar os testes
+pytest>=8
