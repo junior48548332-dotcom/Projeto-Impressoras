@@ -80,7 +80,8 @@ Projeto-Impressoras/
 │       └── dashboard.js    # Comportamento da página (JavaScript)
 ├── tests/
 │   ├── test_projeto.py     # Testes de estrutura do projeto
-│   └── test_classificacao.py  # Testes da classificação dos suprimentos
+│   ├── test_classificacao.py  # Testes da classificação dos suprimentos
+│   └── test_consumo.py     # Testes do cálculo de consumo
 ├── pytest.ini              # Configuração do pytest
 ├── teste_banco.py          # Verificação manual do banco
 ├── teste_consolidacao.py   # Verificação manual da tabela de consolidação
@@ -347,7 +348,7 @@ Dados consolidados do histórico, usados na aba Análise.
 
 - [x] Configurar o pytest e criar a pasta `tests/`
 - [x] Testar a classificação dos suprimentos (`classificar_nivel`)
-- [ ] Testar o cálculo de consumo (`calcular_consumo`)
+- [x] Testar o cálculo de consumo (`calcular_consumo`)
 - [ ] Testar as funções de `banco.py`
 - [ ] Testar as rotas da API e do dashboard
 - [ ] Usar banco de dados temporário nos testes
