@@ -104,6 +104,22 @@ function classeDoStatus(impressora) {
 }
 
 
+function descreverImpressora(impressora) {
+
+    // Texto lido pelos leitores de tela ao chegar no card
+
+    return [
+        impressora.local || "Impressora",
+        impressora.modelo || "",
+        "rede " + (impressora.status_rede || "desconhecida"),
+        "nível " + (impressora.status_geral || "desconhecido"),
+        "Ver detalhes"
+    ]
+        .filter(function (parte) { return parte !== ""; })
+        .join(", ");
+}
+
+
 function montarCards() {
 
     const grid =
@@ -137,6 +153,13 @@ function montarCards() {
 
             card.dataset.geral =
                 String(impressora.status_geral || "").toLowerCase();
+
+            card.setAttribute("role", "button");
+
+            card.setAttribute(
+                "aria-label",
+                descreverImpressora(impressora)
+            );
 
             card.addEventListener(
                 "click",
@@ -670,9 +693,11 @@ function mostrarAba(nome) {
     );
 
 
-    if (
-        nome === "analise"
-    ) {
+    const mostrandoAnalise =
+        nome === "analise";
+
+
+    if (mostrandoAnalise) {
 
         analise.classList.add(
             "ativa"
@@ -683,7 +708,6 @@ function mostrarAba(nome) {
         );
 
     }
-
 
     else {
 
@@ -697,6 +721,19 @@ function mostrarAba(nome) {
 
     }
 
+
+    // informa aos leitores de tela qual aba está aberta
+
+    btnAnalise.setAttribute(
+        "aria-selected",
+        String(mostrandoAnalise)
+    );
+
+    btnMonitoramento.setAttribute(
+        "aria-selected",
+        String(!mostrandoAnalise)
+    );
+
 }
 
 
@@ -704,9 +741,45 @@ function mostrarAba(nome) {
    FILTROS
 ========================================================== */
 
+function marcarFiltroAtivo(filtro) {
+
+    // deixa marcado qual contador está selecionado
+
+    const contadores = {
+        todos: "contador-total",
+        online: "contador-online",
+        offline: "contador-offline",
+        atencao: "contador-atencao",
+        critico: "contador-critico"
+    };
+
+
+    Object.keys(contadores).forEach(
+        function (nome) {
+
+            const elemento =
+                document.querySelector(
+                    "." + contadores[nome]
+                );
+
+
+            if (elemento) {
+
+                elemento.setAttribute(
+                    "aria-pressed",
+                    String(nome === filtro)
+                );
+            }
+        }
+    );
+}
+
+
 function filtrarImpressoras(filtro) {
 
     filtroAtual = filtro;
+
+    marcarFiltroAtivo(filtro);
 
     const cards =
         document.querySelectorAll(
@@ -1238,7 +1311,7 @@ function atualizarContador() {
     }
 
     contadorAtualizacao.textContent =
-        `🔄 Próxima atualização: ${segundosParaAtualizar}s`;
+        `Próxima atualização: ${segundosParaAtualizar}s`;
 }
 
 
@@ -1275,7 +1348,7 @@ setInterval(
         atualizacaoEmAndamento = true;
 
         contadorAtualizacao.textContent =
-            "🔄 Atualizando...";
+            "Atualizando...";
 
         contadorAtualizacao.classList.add(
             "atualizando"

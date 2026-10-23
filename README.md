@@ -381,7 +381,7 @@ Dados consolidados do histórico, usados na aba Análise.
 - [x] Criar `importar_planilha.py` para levar o Excel a uma tabela `impressoras` e usar o banco como fonte do cadastro
 - [x] Mover o simulador para a pasta `coleta/` com uma função única `coletar(impressora)`, identificando a impressora pelo IP em vez da posição na planilha
 - [x] Revisar os totais da aba Análise (os rótulos deixam claro que são medições do período, não impressoras)
-- [ ] Remover código não utilizado (`converter_data` no `consolidador.py`)
+- [x] Remover código não utilizado (`converter_data` no `consolidador.py`)
 
 ### Etapa 3 — API
 
@@ -406,7 +406,7 @@ Dados consolidados do histórico, usados na aba Análise.
 
 ### Etapa 5 — Acessibilidade
 
-- [ ] Rótulos para leitores de tela (`aria-label`, `role`)
+- [x] Rótulos para leitores de tela (`aria-label`, `role`)
 - [ ] Navegação por teclado nos cards e nos filtros
 - [ ] Foco correto ao abrir e fechar a janela de detalhes
 - [ ] Status indicado também por texto ou ícone, não só por cor

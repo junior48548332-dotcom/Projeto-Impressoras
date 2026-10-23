@@ -33,11 +33,15 @@
 
         <div class="informacoes-sistema">
 
-            <div class="sistema-header">
+            <div
+                class="sistema-header"
+                role="status"
+                aria-live="polite">
 
                 <span
                     class="ponto-ativo"
-                    id="pontoSistema">
+                    id="pontoSistema"
+                    aria-hidden="true">
                 </span>
 
                 <span id="textoSistema">
@@ -49,7 +53,9 @@
 
             <div
                 class="relogio"
-                id="relogio">
+                id="relogio"
+                aria-label="Hora atual"
+                aria-live="off">
                 --:--:--
             </div>
 
@@ -69,8 +75,12 @@
 
             <div
                 class="contador-atualizacao"
-                id="contadorAtualizacao">
-                🔄 Próxima atualização: 50s
+                role="status"
+                aria-live="polite">
+                <span aria-hidden="true">🔄</span>
+                <span id="contadorAtualizacao">
+                    Próxima atualização: 50s
+                </span>
             </div>
 
         </div>
@@ -78,14 +88,21 @@
     </div>
 
 
-    <div class="navegacao">
+    <div
+        class="navegacao"
+        role="tablist"
+        aria-label="Seções do painel">
 
         <button
             class="botao-nav ativo"
             id="btnMonitoramento"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="aba-monitoramento"
             onclick="mostrarAba('monitoramento')">
 
-            🖨️ Monitoramento
+            <span aria-hidden="true">🖨️</span> Monitoramento
 
         </button>
 
@@ -93,9 +110,13 @@
         <button
             class="botao-nav"
             id="btnAnalise"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="aba-analise"
             onclick="mostrarAba('analise')">
 
-            📊 Análise
+            <span aria-hidden="true">📊</span> Análise
 
         </button>
 
@@ -112,12 +133,17 @@
 
     <section
         id="aba-monitoramento"
-        class="aba ativa">
+        class="aba ativa"
+        role="tabpanel"
+        aria-labelledby="btnMonitoramento">
 
         <div class="resumo">
 
             <div
                 class="contador contador-total"
+                role="button"
+                aria-pressed="true"
+                aria-label="Mostrar todas as impressoras"
                 onclick="filtrarImpressoras('todos')">
 
                 <div class="contador-titulo">
@@ -133,6 +159,9 @@
 
             <div
                 class="contador contador-online"
+                role="button"
+                aria-pressed="false"
+                aria-label="Mostrar apenas as impressoras online"
                 onclick="filtrarImpressoras('online')">
 
                 <div class="contador-titulo">
@@ -148,6 +177,9 @@
 
             <div
                 class="contador contador-offline"
+                role="button"
+                aria-pressed="false"
+                aria-label="Mostrar apenas as impressoras offline"
                 onclick="filtrarImpressoras('offline')">
 
                 <div class="contador-titulo">
@@ -163,6 +195,9 @@
 
             <div
                 class="contador contador-atencao"
+                role="button"
+                aria-pressed="false"
+                aria-label="Mostrar apenas as impressoras em atenção"
                 onclick="filtrarImpressoras('atencao')">
 
                 <div class="contador-titulo">
@@ -178,6 +213,9 @@
 
             <div
                 class="contador contador-critico"
+                role="button"
+                aria-pressed="false"
+                aria-label="Mostrar apenas as impressoras críticas"
                 onclick="filtrarImpressoras('critico')">
 
                 <div class="contador-titulo">
@@ -203,7 +241,9 @@
 
                 <div
                     class="contador-grid-info"
-                    id="contadorGrid">
+                    id="contadorGrid"
+                    role="status"
+                    aria-live="polite">
 
                     {{ total }} impressoras
 
@@ -214,7 +254,9 @@
 
             <div
                 class="grid-impressoras"
-                id="gridImpressoras">
+                id="gridImpressoras"
+                role="group"
+                aria-label="Impressoras monitoradas">
 
                 {% for impressora in impressoras %}
 
@@ -246,6 +288,8 @@
                         data-indice="{{ loop.index0 }}"
                         data-rede="{{ status_rede }}"
                         data-geral="{{ status_geral }}"
+                        role="button"
+                        aria-label="{{ impressora.local }}, {{ impressora.modelo or 'impressora' }}, rede {{ status_rede }}, nível {{ status_geral }}. Ver detalhes"
                         onclick="abrirDetalhes({{ loop.index0 }})">
 
                         <div class="impressora-nome">
@@ -278,7 +322,9 @@
 
     <section
         id="aba-analise"
-        class="aba">
+        class="aba"
+        role="tabpanel"
+        aria-labelledby="btnAnalise">
 
         <div class="cabecalho-analise">
 
@@ -429,7 +475,7 @@
                                 </div>
 
 
-                                <div class="item-barra-fundo">
+                                <div class="item-barra-fundo" aria-hidden="true">
 
                                     {% if maior_consumo > 0 %}
 
@@ -563,12 +609,12 @@
 
                             <tr>
 
-                                <th>#</th>
-                                <th>Impressora</th>
-                                <th>Modelo</th>
-                                <th>IP</th>
-                                <th>Medições</th>
-                                <th>Consumo médio</th>
+                                <th scope="col">#</th>
+                                <th scope="col">Impressora</th>
+                                <th scope="col">Modelo</th>
+                                <th scope="col">IP</th>
+                                <th scope="col">Medições</th>
+                                <th scope="col">Consumo médio</th>
 
                             </tr>
 
@@ -653,7 +699,7 @@
                             Online
                         </div>
 
-                        <div class="item-barra-fundo">
+                        <div class="item-barra-fundo" aria-hidden="true">
 
                             {% set total_status =
                                 analise.total_online +
@@ -698,7 +744,7 @@
                             Offline
                         </div>
 
-                        <div class="item-barra-fundo">
+                        <div class="item-barra-fundo" aria-hidden="true">
 
                             {% if total_status > 0 %}
 
@@ -739,7 +785,7 @@
                             Normais
                         </div>
 
-                        <div class="item-barra-fundo">
+                        <div class="item-barra-fundo" aria-hidden="true">
 
                             {% set total_niveis =
                                 analise.total_normais +
@@ -785,7 +831,7 @@
                             Atenção / Crítico
                         </div>
 
-                        <div class="item-barra-fundo">
+                        <div class="item-barra-fundo" aria-hidden="true">
 
                             {% if total_niveis > 0 %}
 
@@ -849,7 +895,11 @@
     id="modalDetalhes"
     onclick="fecharModalFora(event)">
 
-    <div class="modal-conteudo">
+    <div
+        class="modal-conteudo"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitulo">
 
         <div class="modal-cabecalho">
 
@@ -859,9 +909,10 @@
 
             <button
                 class="fechar"
+                type="button"
+                aria-label="Fechar detalhes da impressora"
                 onclick="fecharModal()">
-
-                &times;
+                <span aria-hidden="true">&times;</span>
 
             </button>
 

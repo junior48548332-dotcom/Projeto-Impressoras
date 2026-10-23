@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 from banco import (
     conectar,
@@ -12,32 +11,6 @@ from banco import (
     salvar_consolidacao,
     buscar_consolidacoes
 )
-
-
-# ================================================================
-# CONVERTE DATA/HORA
-# ================================================================
-
-def converter_data(data_hora):
-
-    if not data_hora:
-        return None
-
-    try:
-        return datetime.strptime(
-            str(data_hora),
-            "%Y-%m-%d %H:%M:%S"
-        )
-
-    except ValueError:
-
-        try:
-            return datetime.fromisoformat(
-                str(data_hora)
-            )
-
-        except ValueError:
-            return None
 
 
 # ================================================================
