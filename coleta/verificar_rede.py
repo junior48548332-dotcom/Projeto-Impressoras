@@ -1,3 +1,19 @@
+"""
+Verificação de conectividade com impressoras reais.
+
+Tenta abrir uma conexão com cada IP para descobrir se a
+impressora responde na rede. É um utilitário de apoio: não faz
+parte do sistema e não é executado pelos testes automatizados,
+porque depende de impressoras ligadas na rede da empresa.
+
+Serve como ponto de partida para a coleta real (coleta/snmp.py),
+que no futuro vai substituir o simulador.
+
+Uso:
+
+    python coleta/verificar_rede.py
+"""
+
 import socket
 import time
 

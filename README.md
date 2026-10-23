@@ -68,7 +68,8 @@ Projeto-Impressoras/
 ├── monitor.py              # Coleta periódica e gravação no banco
 ├── coleta/
 │   ├── __init__.py
-│   └── simulador.py        # Gera níveis de toner e status de rede
+│   ├── simulador.py        # Gera níveis de toner e status de rede
+│   └── verificar_rede.py   # Utilitário: testa conexão com impressoras reais
 ├── consolidador.py         # Resumo diário do histórico
 ├── impressoras.xlsx        # Cadastro das impressoras
 ├── templates/
@@ -86,10 +87,6 @@ Projeto-Impressoras/
 │   ├── test_consumo.py     # Testes do cálculo de consumo
 │   └── test_rotas.py       # Testes das rotas da API e do dashboard
 ├── pytest.ini              # Configuração do pytest
-├── teste_banco.py          # Verificação manual do banco
-├── teste_consolidacao.py   # Verificação manual da tabela de consolidação
-├── teste_contagem.py       # Confere a contagem de status
-├── teste_rede.py           # Testa conexão com impressoras reais pela rede
 └── requirements.txt        # Bibliotecas necessárias
 ```
 
@@ -137,6 +134,55 @@ venv\Scripts\python app.py
 Acesse **http://127.0.0.1:5000** no navegador. Para encerrar qualquer um dos programas, use `Ctrl + C`.
 
 > Em Linux ou macOS, troque `venv\Scripts\python` por `venv/bin/python`.
+
+---
+
+## Testes
+
+O projeto tem **113 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
+
+```powershell
+venv\Scripts\python -m pytest
+```
+
+Saída esperada:
+
+```
+tests/test_banco.py ..................................  [ 30%]
+tests/test_classificacao.py ........................    [ 51%]
+tests/test_consumo.py ....................              [ 69%]
+tests/test_projeto.py ....                              [ 72%]
+tests/test_rotas.py ...............................     [100%]
+
+============================= 113 passed in 1.49s =============================
+```
+
+### O que é testado
+
+| Arquivo | Testes | Verifica |
+|---|---|---|
+| `tests/test_projeto.py` | 4 | Os módulos carregam e os caminhos do `config.py` apontam para a pasta do projeto |
+| `tests/test_banco.py` | 34 | Criação das tabelas, cadastro, histórico, consolidação, consultas da análise e proteção contra SQL injection |
+| `tests/test_classificacao.py` | 24 | A regra de crítico, atenção e normal, principalmente nos limites de 5% e 20% |
+| `tests/test_consumo.py` | 20 | O cálculo de consumo, incluindo a reposição de toner, que não deve contar como consumo |
+| `tests/test_rotas.py` | 31 | A página do dashboard, as duas rotas da API e a coerência entre os números das duas |
+
+### Comandos úteis
+
+```powershell
+venv\Scripts\python -m pytest -q                         :: saída resumida
+venv\Scripts\python -m pytest tests/test_banco.py        :: um arquivo só
+venv\Scripts\python -m pytest -k consumo                 :: testes com "consumo" no nome
+venv\Scripts\python -m pytest -x                         :: para na primeira falha
+```
+
+### Como os testes funcionam
+
+- **Banco temporário:** o `tests/conftest.py` cria um banco novo e vazio para cada teste, numa pasta temporária que o pytest apaga no fim. O `impressoras.db` do projeto nunca é alterado.
+- **Relógio controlado:** como o banco grava a hora atual em cada medição, os testes substituem o relógio para poder verificar consultas por dia.
+- **Sem servidor:** os testes das rotas usam o cliente de teste do Flask, então não é preciso subir o `app.py`.
+
+Por isso os testes podem ser executados a qualquer momento, mesmo com o sistema rodando.
 
 ---
 
@@ -303,7 +349,7 @@ Dados consolidados do histórico, usados na aba Análise.
 | Script web (JavaScript) | Concluído | `static/js/dashboard.js` |
 | Controle de versão | Concluído | Git + GitHub |
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
-| Testes | Em andamento | pytest configurado em `tests/`; faltam os testes das regras |
+| Testes | Concluído | 113 testes automatizados com pytest em `tests/` |
 | Uso de API | Concluído | Rotas `/api/impressoras` e `/api/analise` (`app.py`) |
 | Acessibilidade | Pendente | Etapa 5 |
 | Nuvem | Pendente | Etapa 6 |
@@ -355,8 +401,8 @@ Dados consolidados do histórico, usados na aba Análise.
 - [x] Testar as funções de `banco.py`
 - [x] Testar as rotas da API e do dashboard
 - [x] Usar banco de dados temporário nos testes
-- [ ] Substituir os scripts `teste_*.py` de verificação manual pelos testes automatizados
-- [ ] Documentar como rodar os testes
+- [x] Substituir os scripts `teste_*.py` de verificação manual pelos testes automatizados
+- [x] Documentar como rodar os testes
 
 ### Etapa 5 — Acessibilidade
 

@@ -235,6 +235,33 @@ def test_api_e_pagina_mostram_os_mesmos_numeros(sistema_com_dados):
     assert numero_do_contador(html, "contadorCritico") == str(resumo["criticas"])
 
 
+def test_soma_dos_status_fecha_com_o_total(sistema_com_dados):
+    """
+    Nenhuma impressora pode ficar de fora nem ser contada duas vezes.
+
+    Verificação que antes era feita à mão pelo teste_contagem.py.
+    """
+
+    dados = sistema_com_dados.get("/api/impressoras").get_json()
+
+    resumo = dados["resumo"]
+
+    assert resumo["online"] + resumo["offline"] == resumo["total"]
+
+    normais = sum(
+        1
+        for impressora in dados["impressoras"]
+        if impressora["status_geral"] == "normal"
+    )
+
+    assert (
+        normais + resumo["atencao"] + resumo["criticas"]
+        == resumo["total"]
+    )
+
+    assert len(dados["impressoras"]) == resumo["total"]
+
+
 def test_impressora_sem_medicao_aparece_como_desconhecida(cliente, conexao, cadastro_exemplo):
     """Cadastrada mas ainda não medida: precisa aparecer na lista."""
 
