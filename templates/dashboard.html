@@ -142,6 +142,7 @@
             <div
                 class="contador contador-total"
                 role="button"
+                tabindex="0"
                 aria-pressed="true"
                 aria-label="Mostrar todas as impressoras"
                 onclick="filtrarImpressoras('todos')">
@@ -160,6 +161,7 @@
             <div
                 class="contador contador-online"
                 role="button"
+                tabindex="0"
                 aria-pressed="false"
                 aria-label="Mostrar apenas as impressoras online"
                 onclick="filtrarImpressoras('online')">
@@ -178,6 +180,7 @@
             <div
                 class="contador contador-offline"
                 role="button"
+                tabindex="0"
                 aria-pressed="false"
                 aria-label="Mostrar apenas as impressoras offline"
                 onclick="filtrarImpressoras('offline')">
@@ -196,6 +199,7 @@
             <div
                 class="contador contador-atencao"
                 role="button"
+                tabindex="0"
                 aria-pressed="false"
                 aria-label="Mostrar apenas as impressoras em atenção"
                 onclick="filtrarImpressoras('atencao')">
@@ -214,6 +218,7 @@
             <div
                 class="contador contador-critico"
                 role="button"
+                tabindex="0"
                 aria-pressed="false"
                 aria-label="Mostrar apenas as impressoras críticas"
                 onclick="filtrarImpressoras('critico')">
@@ -285,6 +290,7 @@
 
                     <div
                         class="impressora {{ classe_status }}"
+                        tabindex="0"
                         data-indice="{{ loop.index0 }}"
                         data-rede="{{ status_rede }}"
                         data-geral="{{ status_geral }}"

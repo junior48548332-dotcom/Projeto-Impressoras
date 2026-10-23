@@ -407,7 +407,7 @@ Dados consolidados do histórico, usados na aba Análise.
 ### Etapa 5 — Acessibilidade
 
 - [x] Rótulos para leitores de tela (`aria-label`, `role`)
-- [ ] Navegação por teclado nos cards e nos filtros
+- [x] Navegação por teclado nos cards e nos filtros
 - [ ] Foco correto ao abrir e fechar a janela de detalhes
 - [ ] Status indicado também por texto ou ícone, não só por cor
 - [ ] Conferir o contraste das cores

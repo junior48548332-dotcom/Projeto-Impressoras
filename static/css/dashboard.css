@@ -771,3 +771,26 @@ body {
         grid-template-columns: 100px 1fr 50px;
     }
 }
+
+/* ===============================================================
+   FOCO DO TECLADO
+
+   Marca onde o teclado está. Sem isso, quem navega com Tab
+   não enxerga qual elemento está selecionado.
+   =============================================================== */
+
+.contador:focus-visible,
+.impressora:focus-visible,
+.botao-nav:focus-visible,
+.fechar:focus-visible,
+.modal-conteudo:focus-visible {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
+}
+
+/* Navegadores antigos, que não entendem :focus-visible */
+.contador:focus,
+.impressora:focus {
+    outline: 3px solid #1d4ed8;
+    outline-offset: 2px;
+}

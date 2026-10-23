@@ -154,7 +154,9 @@ function montarCards() {
             card.dataset.geral =
                 String(impressora.status_geral || "").toLowerCase();
 
-            card.setAttribute("role", "button");
+                        card.setAttribute("role", "button");
+
+            card.setAttribute("tabindex", "0");
 
             card.setAttribute(
                 "aria-label",
@@ -1238,6 +1240,46 @@ function abrirDetalhes(indice) {
     );
 
 }
+
+
+/* =========================================================
+   TECLADO
+
+   Cards e contadores são divs com papel de botão. O
+   navegador não aciona esses elementos pelo teclado
+   sozinho, então tratamos Enter e Espaço aqui.
+========================================================== */
+
+document.addEventListener(
+    "keydown",
+    function (evento) {
+
+        if (
+            evento.key !== "Enter" &&
+            evento.key !== " "
+        ) {
+            return;
+        }
+
+
+        const alvo = evento.target;
+
+
+        if (
+            !alvo ||
+            !alvo.getAttribute ||
+            alvo.getAttribute("role") !== "button"
+        ) {
+            return;
+        }
+
+
+        // evita que o Espaço role a página
+        evento.preventDefault();
+
+        alvo.click();
+    }
+);
 
 
 /* =========================================================
