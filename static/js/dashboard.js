@@ -11,6 +11,9 @@ let impressoras = [];
 // filtro escolhido pelo usuário (todos, online, offline, atencao, critico)
 let filtroAtual = "todos";
 
+// elemento que abriu a janela de detalhes, para devolver o foco
+let elementoQueAbriuModal = null;
+
 
 const configuracao =
     JSON.parse(
@@ -889,6 +892,9 @@ function filtrarImpressoras(filtro) {
 
 function abrirDetalhes(indice) {
 
+    // quem estava com o foco volta a tê-lo quando a janela fechar
+    elementoQueAbriuModal = document.activeElement;
+
     const impressora =
         impressoras[indice];
 
@@ -1239,7 +1245,101 @@ function abrirDetalhes(indice) {
         "ativo"
     );
 
+
+    // o foco vai para dentro da janela
+
+    const botaoFechar =
+        document.getElementById(
+            "botaoFecharModal"
+        );
+
+
+    if (botaoFechar && botaoFechar.focus) {
+        botaoFechar.focus();
+    }
 }
+
+
+/* =========================================================
+   FOCO DENTRO DA JANELA
+
+   Com a janela aberta, o Tab não pode sair para a página
+   atrás dela: o foco circula entre os elementos da janela.
+========================================================== */
+
+function elementosFocaveisDoModal() {
+
+    const modal =
+        document.getElementById(
+            "modalDetalhes"
+        );
+
+
+    if (!modal || !modal.querySelectorAll) {
+        return [];
+    }
+
+
+    return Array.from(
+        modal.querySelectorAll(
+            "button, a[href], [tabindex]:not([tabindex=\"-1\"])"
+        )
+    );
+}
+
+
+function manterFocoNaJanela(evento) {
+
+    if (
+        evento.key !== "Tab" ||
+        !modalEstaAberto()
+    ) {
+        return;
+    }
+
+
+    const focaveis =
+        elementosFocaveisDoModal();
+
+
+    if (focaveis.length === 0) {
+        return;
+    }
+
+
+    const primeiro = focaveis[0];
+
+    const ultimo =
+        focaveis[focaveis.length - 1];
+
+
+    if (
+        evento.shiftKey &&
+        document.activeElement === primeiro
+    ) {
+
+        evento.preventDefault();
+
+        ultimo.focus();
+
+    }
+
+    else if (
+        !evento.shiftKey &&
+        document.activeElement === ultimo
+    ) {
+
+        evento.preventDefault();
+
+        primeiro.focus();
+    }
+}
+
+
+document.addEventListener(
+    "keydown",
+    manterFocoNaJanela
+);
 
 
 /* =========================================================
@@ -1286,6 +1386,21 @@ document.addEventListener(
    FECHAR MODAL
 ========================================================== */
 
+function modalEstaAberto() {
+
+    const modal =
+        document.getElementById(
+            "modalDetalhes"
+        );
+
+    return Boolean(
+        modal &&
+        modal.classList &&
+        modal.classList.contains("ativo")
+    );
+}
+
+
 function fecharModal() {
 
     document.getElementById(
@@ -1294,6 +1409,17 @@ function fecharModal() {
         "ativo"
     );
 
+
+    // devolve o foco para o card que abriu a janela
+
+    if (
+        elementoQueAbriuModal &&
+        elementoQueAbriuModal.focus
+    ) {
+        elementoQueAbriuModal.focus();
+    }
+
+    elementoQueAbriuModal = null;
 }
 
 
