@@ -409,7 +409,7 @@ Dados consolidados do histórico, usados na aba Análise.
 - [x] Rótulos para leitores de tela (`aria-label`, `role`)
 - [x] Navegação por teclado nos cards e nos filtros
 - [x] Foco correto ao abrir e fechar a janela de detalhes
-- [ ] Status indicado também por texto ou ícone, não só por cor
+- [x] Status indicado também por texto ou ícone, não só por cor
 - [ ] Conferir o contraste das cores
 - [ ] Validar com Lighthouse ou WAVE e registrar o resultado
 

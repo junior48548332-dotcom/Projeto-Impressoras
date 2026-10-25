@@ -82,6 +82,15 @@ async function carregarImpressoras() {
    assim a tela reflete os dados mais recentes sem recarregar.
 ========================================================== */
 
+// Ícone e texto de cada situação, para não depender só da cor
+const SITUACOES = {
+    normal: { icone: "✓", texto: "Normal" },
+    atencao: { icone: "⚠", texto: "Atenção" },
+    critico: { icone: "✕", texto: "Crítico" },
+    offline: { icone: "⊘", texto: "Offline" }
+};
+
+
 function classeDoStatus(impressora) {
 
     const rede =
@@ -192,9 +201,27 @@ function montarCards() {
                 impressora.modelo || "Impressora";
 
 
+            const situacao =
+                SITUACOES[classeDoStatus(impressora)];
+
+
+            const status =
+                document.createElement("div");
+
+            status.className = "impressora-status";
+
+            status.innerHTML =
+                '<span aria-hidden="true">' +
+                situacao.icone +
+                "</span> " +
+                situacao.texto;
+
+
             card.appendChild(nome);
 
             card.appendChild(modelo);
+
+            card.appendChild(status);
 
             grid.appendChild(card);
         }

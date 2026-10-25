@@ -246,7 +246,7 @@ body {
 }
 
 .impressora {
-    min-height: 62px;
+    min-height: 72px;
     border-radius: 7px;
     padding: 9px 8px;
     cursor: pointer;
@@ -793,4 +793,24 @@ body {
 .impressora:focus {
     outline: 3px solid #1d4ed8;
     outline-offset: 2px;
+}
+
+/* ===============================================================
+   SITUAÇÃO ESCRITA NO CARD
+
+   O status não pode ser indicado apenas pela cor de fundo:
+   quem não distingue cores precisa do ícone e do texto.
+   =============================================================== */
+
+.impressora-status {
+    margin-top: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+    overflow: hidden;
 }

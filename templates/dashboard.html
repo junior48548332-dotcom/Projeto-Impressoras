@@ -272,18 +272,26 @@
                     {% if status_rede == 'offline' %}
 
                         {% set classe_status = 'offline' %}
+                        {% set icone_status = '⊘' %}
+                        {% set texto_status = 'Offline' %}
 
                     {% elif status_geral == 'critico' %}
 
                         {% set classe_status = 'critico' %}
+                        {% set icone_status = '✕' %}
+                        {% set texto_status = 'Crítico' %}
 
                     {% elif status_geral == 'atencao' %}
 
                         {% set classe_status = 'atencao' %}
+                        {% set icone_status = '⚠' %}
+                        {% set texto_status = 'Atenção' %}
 
                     {% else %}
 
                         {% set classe_status = 'normal' %}
+                        {% set icone_status = '✓' %}
+                        {% set texto_status = 'Normal' %}
 
                     {% endif %}
 
@@ -304,6 +312,11 @@
 
                         <div class="impressora-local">
                             {{ impressora.modelo or 'Impressora' }}
+                        </div>
+
+                        <div class="impressora-status">
+                            <span aria-hidden="true">{{ icone_status }}</span>
+                            {{ texto_status }}
                         </div>
 
                     </div>
