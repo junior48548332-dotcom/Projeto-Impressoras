@@ -79,6 +79,8 @@ Projeto-Impressoras/
 │   │   └── dashboard.css   # Estilos do dashboard
 │   └── js/
 │       └── dashboard.js    # Comportamento da página (JavaScript)
+├── docs/
+│   └── acessibilidade/     # Relatório de acessibilidade (Lighthouse)
 ├── tests/
 │   ├── conftest.py         # Banco temporário e dados de exemplo
 │   ├── test_projeto.py     # Testes de estrutura do projeto
@@ -352,7 +354,7 @@ Dados consolidados do histórico, usados na aba Análise.
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
 | Testes | Concluído | 113 testes automatizados com pytest em `tests/` |
 | Uso de API | Concluído | Rotas `/api/impressoras` e `/api/analise` (`app.py`) |
-| Acessibilidade | Pendente | Etapa 5 |
+| Acessibilidade | Concluído | Lighthouse 100/100 (`docs/acessibilidade/`) |
 | Nuvem | Pendente | Etapa 6 |
 
 ---
@@ -412,7 +414,7 @@ Dados consolidados do histórico, usados na aba Análise.
 - [x] Foco correto ao abrir e fechar a janela de detalhes
 - [x] Status indicado também por texto ou ícone, não só por cor
 - [x] Conferir o contraste das cores
-- [ ] Validar com Lighthouse ou WAVE e registrar o resultado
+- [x] Validar com Lighthouse ou WAVE e registrar o resultado (100/100, ver `docs/acessibilidade/`)
 
 ### Etapa 6 — Nuvem
 

@@ -116,20 +116,7 @@ function classeDoStatus(impressora) {
 }
 
 
-function descreverImpressora(impressora) {
 
-    // Texto lido pelos leitores de tela ao chegar no card
-
-    return [
-        impressora.local || "Impressora",
-        impressora.modelo || "",
-        "rede " + (impressora.status_rede || "desconhecida"),
-        "nível " + (impressora.status_geral || "desconhecido"),
-        "Ver detalhes"
-    ]
-        .filter(function (parte) { return parte !== ""; })
-        .join(", ");
-}
 
 
 function montarCards() {
@@ -166,14 +153,9 @@ function montarCards() {
             card.dataset.geral =
                 String(impressora.status_geral || "").toLowerCase();
 
-                        card.setAttribute("role", "button");
+            card.setAttribute("role", "button");
 
             card.setAttribute("tabindex", "0");
-
-            card.setAttribute(
-                "aria-label",
-                descreverImpressora(impressora)
-            );
 
             card.addEventListener(
                 "click",
@@ -222,6 +204,19 @@ function montarCards() {
             card.appendChild(modelo);
 
             card.appendChild(status);
+
+
+            const complemento =
+                document.createElement("span");
+
+            complemento.className = "apenas-leitor";
+
+            complemento.textContent =
+                "Rede " +
+                (impressora.status_rede || "desconhecida") +
+                ". Ver detalhes";
+
+            card.appendChild(complemento);
 
             grid.appendChild(card);
         }

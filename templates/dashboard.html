@@ -144,7 +144,6 @@
                 role="button"
                 tabindex="0"
                 aria-pressed="true"
-                aria-label="Mostrar todas as impressoras"
                 onclick="filtrarImpressoras('todos')">
 
                 <div class="contador-titulo">
@@ -155,6 +154,8 @@
                     {{ total }}
                 </div>
 
+                <span class="apenas-leitor">Mostrar todas as impressoras</span>
+
             </div>
 
 
@@ -163,7 +164,6 @@
                 role="button"
                 tabindex="0"
                 aria-pressed="false"
-                aria-label="Mostrar apenas as impressoras online"
                 onclick="filtrarImpressoras('online')">
 
                 <div class="contador-titulo">
@@ -174,6 +174,8 @@
                     {{ online }}
                 </div>
 
+                <span class="apenas-leitor">Mostrar apenas as impressoras online</span>
+
             </div>
 
 
@@ -182,7 +184,6 @@
                 role="button"
                 tabindex="0"
                 aria-pressed="false"
-                aria-label="Mostrar apenas as impressoras offline"
                 onclick="filtrarImpressoras('offline')">
 
                 <div class="contador-titulo">
@@ -193,6 +194,8 @@
                     {{ offline }}
                 </div>
 
+                <span class="apenas-leitor">Mostrar apenas as impressoras offline</span>
+
             </div>
 
 
@@ -201,7 +204,6 @@
                 role="button"
                 tabindex="0"
                 aria-pressed="false"
-                aria-label="Mostrar apenas as impressoras em atenção"
                 onclick="filtrarImpressoras('atencao')">
 
                 <div class="contador-titulo">
@@ -212,6 +214,8 @@
                     {{ atencao }}
                 </div>
 
+                <span class="apenas-leitor">Mostrar apenas as impressoras em atenção</span>
+
             </div>
 
 
@@ -220,7 +224,6 @@
                 role="button"
                 tabindex="0"
                 aria-pressed="false"
-                aria-label="Mostrar apenas as impressoras críticas"
                 onclick="filtrarImpressoras('critico')">
 
                 <div class="contador-titulo">
@@ -230,6 +233,8 @@
                 <div class="contador-numero" id="contadorCritico">
                     {{ criticas }}
                 </div>
+
+                <span class="apenas-leitor">Mostrar apenas as impressoras críticas</span>
 
             </div>
 
@@ -303,7 +308,6 @@
                         data-rede="{{ status_rede }}"
                         data-geral="{{ status_geral }}"
                         role="button"
-                        aria-label="{{ impressora.local }}, {{ impressora.modelo or 'impressora' }}, rede {{ status_rede }}, nível {{ status_geral }}. Ver detalhes"
                         onclick="abrirDetalhes({{ loop.index0 }})">
 
                         <div class="impressora-nome">
@@ -318,6 +322,10 @@
                             <span aria-hidden="true">{{ icone_status }}</span>
                             {{ texto_status }}
                         </div>
+
+                        <span class="apenas-leitor">
+                            Rede {{ status_rede }}. Ver detalhes
+                        </span>
 
                     </div>
 
