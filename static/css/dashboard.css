@@ -199,7 +199,7 @@ body {
 }
 
 .contador-atencao .contador-numero {
-    color: #ca8a04;
+    color: #a16207;
 }
 
 .contador-critico .contador-numero {
@@ -431,15 +431,15 @@ body {
 }
 
 .barra-normal {
-    background: #22c55e;
+    background: #15803d;
 }
 
 .barra-atencao {
-    background: #eab308;
+    background: #a16207;
 }
 
 .barra-critico {
-    background: #ef4444;
+    background: #dc2626;
 }
 
 .sem-suprimentos {
@@ -520,7 +520,7 @@ body {
 .indicador-legenda {
     margin-top: 3px;
     font-size: 10px;
-    color: #9ca3af;
+    color: #6b7280;
 }
 
 .painel-analise {
@@ -691,7 +691,7 @@ body {
 .rodape {
     margin-top: 12px;
     text-align: center;
-    color: #9ca3af;
+    color: #6b7280;
     font-size: 10px;
 }
 

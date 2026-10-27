@@ -85,6 +85,7 @@ Projeto-Impressoras/
 │   ├── test_banco.py       # Testes do acesso ao banco
 │   ├── test_classificacao.py  # Testes da classificação dos suprimentos
 │   ├── test_consumo.py     # Testes do cálculo de consumo
+│   ├── test_contraste.py   # Testes de contraste das cores (WCAG)
 │   └── test_rotas.py       # Testes das rotas da API e do dashboard
 ├── pytest.ini              # Configuração do pytest
 └── requirements.txt        # Bibliotecas necessárias
@@ -410,7 +411,7 @@ Dados consolidados do histórico, usados na aba Análise.
 - [x] Navegação por teclado nos cards e nos filtros
 - [x] Foco correto ao abrir e fechar a janela de detalhes
 - [x] Status indicado também por texto ou ícone, não só por cor
-- [ ] Conferir o contraste das cores
+- [x] Conferir o contraste das cores
 - [ ] Validar com Lighthouse ou WAVE e registrar o resultado
 
 ### Etapa 6 — Nuvem
