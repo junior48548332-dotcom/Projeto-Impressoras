@@ -6,6 +6,7 @@ from banco import (
     contar_registros,
     criar_tabela_consolidacao,
     buscar_dias_historico,
+    buscar_ultimo_dia_historico,
     buscar_impressoras_do_dia,
     buscar_medicoes_do_dia,
     salvar_consolidacao,
@@ -256,6 +257,34 @@ def consolidar_dia(conexao, data):
             total_processadas += 1
 
     return total_processadas
+
+
+# ================================================================
+# CONSOLIDA O DIA DA ÚLTIMA MEDIÇÃO
+# ================================================================
+
+def consolidar_ultimo_dia(conexao):
+    """
+    Consolida apenas o dia da medição mais recente.
+
+    É o que roda depois de cada coleta. Reprocessar o histórico
+    inteiro a cada coleta seria desperdício: os dias anteriores
+    já estão fechados e o resultado deles não muda mais.
+
+    O dia vem da própria medição, não do relógio do sistema.
+    Assim a consolidação acerta o dia mesmo quando a coleta
+    atravessa a meia-noite ou quando o servidor está em outro
+    fuso horário.
+
+    Devolve quantas impressoras foram processadas.
+    """
+
+    data = buscar_ultimo_dia_historico(conexao)
+
+    if not data:
+        return 0
+
+    return consolidar_dia(conexao, data)
 
 
 # ================================================================

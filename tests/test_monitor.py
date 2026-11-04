@@ -133,6 +133,77 @@ def test_coleta_unica_nao_espera(coleta_falsa, sem_espera):
 
 
 # ================================================================
+# CONSOLIDAÇÃO JUNTO DA COLETA
+# ================================================================
+
+def test_coleta_consolida_o_dia(coleta_falsa):
+    """
+    A aba Análise do dashboard lê a consolidação. No servidor
+    ninguém roda o consolidador na mão, então a coleta precisa
+    consolidar sozinha — senão a Análise fica congelada.
+    """
+
+    monitor.coletar_uma_vez()
+
+    conexao = banco.conectar()
+
+    consolidadas = banco.buscar_consolidacoes(conexao)
+
+    conexao.close()
+
+    assert len(consolidadas) == len(coleta_falsa)
+
+
+def test_modo_continuo_tambem_consolida(coleta_falsa, monkeypatch):
+    """
+    Sai do laço na primeira espera, depois de uma coleta de
+    verdade, e confere que a consolidação aconteceu.
+    """
+
+    def parar_na_primeira_espera(segundos):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(
+        monitor.time,
+        "sleep",
+        parar_na_primeira_espera
+    )
+
+    monitor.main([monitor.MODO_CONTINUO])
+
+    conexao = banco.conectar()
+
+    consolidadas = banco.buscar_consolidacoes(conexao)
+
+    conexao.close()
+
+    assert len(consolidadas) == len(coleta_falsa)
+
+
+def test_consolidacao_cobre_as_medicoes_da_coleta(coleta_falsa):
+    """
+    Duas coletas no mesmo dia precisam virar duas medições em
+    um único registro consolidado, não dois registros.
+    """
+
+    monitor.coletar_uma_vez()
+    monitor.coletar_uma_vez()
+
+    conexao = banco.conectar()
+
+    consolidadas = banco.buscar_consolidacoes(conexao)
+
+    conexao.close()
+
+    assert len(consolidadas) == len(coleta_falsa)
+
+    for registro in consolidadas:
+        total_medicoes = registro[4]
+
+        assert total_medicoes == 2
+
+
+# ================================================================
 # ESCOLHA DO MODO
 # ================================================================
 

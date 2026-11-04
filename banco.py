@@ -478,6 +478,31 @@ def buscar_dias_historico(conexao):
     ]
 
 
+def buscar_ultimo_dia_historico(conexao):
+    """
+    Devolve o dia da medição mais recente, ou None se o
+    histórico estiver vazio.
+
+    Serve para consolidar só o dia que acabou de receber
+    medições, sem reprocessar o histórico inteiro.
+    """
+
+    cursor = conexao.cursor()
+
+    cursor.execute("""
+        SELECT substr(MAX(data_hora), 1, 10)
+        FROM historico_impressoras
+        WHERE data_hora IS NOT NULL
+    """)
+
+    registro = cursor.fetchone()
+
+    if not registro or not registro[0]:
+        return None
+
+    return registro[0]
+
+
 def buscar_impressoras_do_dia(conexao, data):
 
     cursor = conexao.cursor()

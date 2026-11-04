@@ -30,7 +30,8 @@ flowchart LR
     T --> M[monitor.py<br/>coleta os dados]
     S[coleta/simulador.py<br/>gera os dados] --> M
     M --> H[(historico_impressoras)]
-    H --> C[consolidador.py<br/>resumo por dia]
+    M -.->|após cada coleta| C
+    H --> C[consolidador.py<br/>resumo do dia]
     C --> D[(consolidacao_diaria)]
     T --> A[app.py<br/>Flask]
     H --> A
@@ -41,7 +42,7 @@ flowchart LR
 
 1. **Cadastro:** a planilha `impressoras.xlsx` lista as impressoras ativas (local, modelo, tipo, papel, nº de série e IP). O `importar_planilha.py` copia esse cadastro para a tabela `impressoras` do banco, que é de onde o resto do sistema lê.
 2. **Coleta:** o `monitor.py` lê o cadastro no banco, pede ao simulador os dados de cada impressora e grava uma medição. Sem argumentos ele faz uma coleta e encerra, que é o modo usado pela tarefa agendada do servidor; com `--continuo` ele repete a coleta a cada 10 minutos, para uso local.
-3. **Consolidação:** o `consolidador.py` agrupa as medições por dia e por impressora, calculando consumo médio, tempo online/offline e alertas.
+3. **Consolidação:** o `consolidador.py` agrupa as medições por dia e por impressora, calculando consumo médio, tempo online/offline e alertas. O `monitor.py` chama a consolidação do dia ao fim de cada coleta, então a aba Análise não depende de ninguém rodar nada na mão. Executado direto, o `consolidador.py` reprocessa o histórico inteiro.
 4. **Visualização:** o `app.py` junta tudo e entrega o dashboard, que tem duas abas: **Monitoramento** (situação atual) e **Análise** (histórico consolidado).
 
 ### Regras de classificação dos suprimentos
@@ -65,7 +66,7 @@ Projeto-Impressoras/
 ├── banco.py                # Conexão, criação das tabelas e consultas SQL
 ├── planilha.py             # Leitura do cadastro de impressoras no Excel
 ├── importar_planilha.py    # Copia o cadastro da planilha para o banco
-├── monitor.py              # Coleta periódica e gravação no banco
+├── monitor.py              # Coleta os dados e consolida o dia
 ├── coleta/
 │   ├── __init__.py
 │   ├── simulador.py        # Gera níveis de toner e status de rede
@@ -87,6 +88,7 @@ Projeto-Impressoras/
 │   ├── test_banco.py       # Testes do acesso ao banco
 │   ├── test_classificacao.py  # Testes da classificação dos suprimentos
 │   ├── test_consumo.py     # Testes do cálculo de consumo
+│   ├── test_consolidacao.py   # Testes da consolidação do dia da coleta
 │   ├── test_contraste.py   # Testes de contraste das cores (WCAG)
 │   ├── test_rotas.py       # Testes das rotas da API e do dashboard
 │   └── test_monitor.py     # Testes dos modos de execução do monitor
@@ -129,7 +131,9 @@ O comando acima faz uma coleta e encerra. Para acompanhar o sistema por mais tem
 venv\Scripts\python monitor.py --continuo
 ```
 
-**4. Gerar a consolidação** (em outro terminal, depois de algumas coletas)
+**4. Consolidar o histórico** (opcional)
+
+Cada coleta já consolida o próprio dia, então a aba Análise fica em dia sozinha. O comando abaixo reprocessa **todos** os dias do histórico, e serve para reconstruir a consolidação desde o começo:
 
 ```powershell
 venv\Scripts\python consolidador.py
@@ -149,7 +153,7 @@ Acesse **http://127.0.0.1:5000** no navegador. Para encerrar qualquer um dos pro
 
 ## Testes
 
-O projeto tem **155 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
+O projeto tem **168 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
 
 ```powershell
 venv\Scripts\python -m pytest
@@ -158,15 +162,16 @@ venv\Scripts\python -m pytest
 Saída esperada:
 
 ```
-tests/test_banco.py ..................................  [ 21%]
-tests/test_classificacao.py ........................    [ 37%]
-tests/test_consumo.py ....................              [ 50%]
-tests/test_contraste.py ..............................  [ 69%]
-tests/test_monitor.py ............                      [ 77%]
-tests/test_projeto.py ....                              [ 80%]
+tests/test_banco.py ..................................  [ 20%]
+tests/test_classificacao.py ........................    [ 34%]
+tests/test_consolidacao.py ..........                   [ 40%]
+tests/test_consumo.py ....................              [ 52%]
+tests/test_contraste.py ..............................  [ 70%]
+tests/test_monitor.py ...............                   [ 79%]
+tests/test_projeto.py ....                              [ 81%]
 tests/test_rotas.py ...............................     [100%]
 
-============================= 155 passed in 5.06s =============================
+============================= 168 passed in 1.92s =============================
 ```
 
 ### O que é testado
@@ -179,7 +184,8 @@ tests/test_rotas.py ...............................     [100%]
 | `tests/test_consumo.py` | 20 | O cálculo de consumo, incluindo a reposição de toner, que não deve contar como consumo |
 | `tests/test_rotas.py` | 31 | A página do dashboard, as duas rotas da API e a coerência entre os números das duas |
 | `tests/test_contraste.py` | 30 | O contraste de cada combinação de cores do dashboard, segundo a WCAG 2.1 AA |
-| `tests/test_monitor.py` | 12 | Os dois modos de execução do monitor: uma coleta e encerra, ou repetir até o `CTRL + C` |
+| `tests/test_monitor.py` | 15 | Os dois modos de execução do monitor, a consolidação junto da coleta e os códigos de saída |
+| `tests/test_consolidacao.py` | 10 | A consolidação do dia da coleta, sem reprocessar os dias anteriores |
 
 ### Comandos úteis
 
@@ -363,7 +369,7 @@ Dados consolidados do histórico, usados na aba Análise.
 | Script web (JavaScript) | Concluído | `static/js/dashboard.js` |
 | Controle de versão | Concluído | Git + GitHub |
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
-| Testes | Concluído | 155 testes automatizados com pytest em `tests/` |
+| Testes | Concluído | 168 testes automatizados com pytest em `tests/` |
 | Uso de API | Concluído | Rotas `/api/impressoras` e `/api/analise` (`app.py`) |
 | Acessibilidade | Concluído | Lighthouse 100/100 (`docs/acessibilidade/`) |
 | Nuvem | Pendente | Etapa 6 |
@@ -430,7 +436,7 @@ Dados consolidados do histórico, usados na aba Análise.
 ### Etapa 6 — Nuvem
 
 - [x] Alterar o `monitor.py` para executar uma coleta e terminar (manter o modo contínuo como opção para uso local)
-- [ ] Executar o consolidador automaticamente após cada coleta
+- [x] Executar o consolidador automaticamente após cada coleta
 - [ ] Ajustar configurações para produção (desligar `debug`)
 - [ ] Publicar no PythonAnywhere (mantém os arquivos, então o SQLite funciona, e oferece tarefas agendadas)
 - [ ] Agendar a coleta no servidor

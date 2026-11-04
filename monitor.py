@@ -14,6 +14,8 @@ from banco import (
 
 from coleta.simulador import coletar
 
+from consolidador import consolidar_ultimo_dia
+
 
 # ================================================================
 # CLASSIFICAÇÃO DOS SUPRIMENTOS
@@ -227,6 +229,40 @@ def preparar_banco():
 
 
 # ================================================================
+# COLETA + CONSOLIDAÇÃO
+# ================================================================
+
+def coletar_e_consolidar():
+    """
+    Faz uma coleta e consolida o dia dela em seguida.
+
+    A consolidação é o que alimenta a aba Análise do dashboard.
+    Rodando junto da coleta, os números ficam em dia sozinhos,
+    sem ninguém precisar executar o consolidador na mão.
+
+    Só o dia da coleta é consolidado. Os dias anteriores já
+    estão fechados e não mudam mais.
+    """
+
+    total = executar_verificacao()
+
+    conexao = conectar()
+
+    processadas = consolidar_ultimo_dia(conexao)
+
+    conexao.close()
+
+    print(
+        f"CONSOLIDAÇÃO DO DIA: "
+        f"{processadas} impressoras processadas."
+    )
+
+    print("-" * 60)
+
+    return total
+
+
+# ================================================================
 # COLETA ÚNICA
 # ================================================================
 
@@ -241,7 +277,7 @@ def coletar_uma_vez():
 
     preparar_banco()
 
-    return executar_verificacao()
+    return coletar_e_consolidar()
 
 
 # ================================================================
@@ -281,7 +317,7 @@ def iniciar_monitoramento():
 
         try:
 
-            executar_verificacao()
+            coletar_e_consolidar()
 
             print(
                 "\nPróxima verificação em "
