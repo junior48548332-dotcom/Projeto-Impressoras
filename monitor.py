@@ -1,3 +1,4 @@
+import sys
 import time
 
 from datetime import datetime
@@ -208,18 +209,53 @@ def executar_verificacao():
 
     print("-" * 60)
 
+    return contador
+
 
 # ================================================================
-# MONITORAMENTO CONTÍNUO
+# PREPARA O BANCO
 # ================================================================
 
-def iniciar_monitoramento():
+def preparar_banco():
+    """Cria as tabelas, caso ainda não existam."""
 
     conexao = conectar()
 
     criar_tabelas(conexao)
 
     conexao.close()
+
+
+# ================================================================
+# COLETA ÚNICA
+# ================================================================
+
+def coletar_uma_vez():
+    """
+    Executa uma coleta e encerra.
+
+    É o modo usado no servidor. A tarefa agendada roda o
+    comando, espera ele terminar e anota o resultado, então um
+    programa que nunca termina não serve para ela.
+    """
+
+    preparar_banco()
+
+    return executar_verificacao()
+
+
+# ================================================================
+# MONITORAMENTO CONTÍNUO
+# ================================================================
+
+def iniciar_monitoramento():
+    """
+    Coleta de tempos em tempos até receber CTRL + C.
+
+    É o modo para uso local, com o terminal aberto.
+    """
+
+    preparar_banco()
 
     print("\n" + "=" * 60)
 
@@ -283,9 +319,106 @@ def iniciar_monitoramento():
 
 
 # ================================================================
+# LINHA DE COMANDO
+# ================================================================
+
+MODO_CONTINUO = "--continuo"
+
+PEDIDOS_DE_AJUDA = ("--ajuda", "-h")
+
+ARGUMENTOS_VALIDOS = (MODO_CONTINUO,) + PEDIDOS_DE_AJUDA
+
+
+def mostrar_ajuda():
+
+    print(
+        "\nMonitor de impressoras."
+        "\n"
+        "\n    python monitor.py              uma coleta e encerra"
+        "\n    python monitor.py --continuo   coleta a cada "
+        f"{INTERVALO_COLETA // 60} minutos"
+        "\n    python monitor.py --ajuda      mostra esta mensagem"
+        "\n"
+        "\nSem argumentos, o programa faz uma coleta e termina."
+        "\nEsse é o modo usado pela tarefa agendada do servidor."
+    )
+
+
+def main(argumentos):
+    """
+    Escolhe o modo de execução e devolve o código de saída.
+
+    O código de saída importa na nuvem: o servidor usa ele para
+    saber se a tarefa agendada funcionou (0) ou falhou (1).
+    """
+
+    # ============================================================
+    # AJUDA
+    # ============================================================
+
+    for pedido in PEDIDOS_DE_AJUDA:
+
+        if pedido in argumentos:
+
+            mostrar_ajuda()
+
+            return 0
+
+    # ============================================================
+    # ARGUMENTO ESCRITO ERRADO
+    # ============================================================
+    # Avisa em vez de fazer uma coleta única por engano, que
+    # seria confuso para quem pediu o modo contínuo.
+
+    for argumento in argumentos:
+
+        if argumento not in ARGUMENTOS_VALIDOS:
+
+            print(
+                f"\n[ERRO] Argumento não reconhecido: {argumento}"
+            )
+
+            mostrar_ajuda()
+
+            return 2
+
+    # ============================================================
+    # MODO CONTÍNUO
+    # ============================================================
+
+    if MODO_CONTINUO in argumentos:
+
+        iniciar_monitoramento()
+
+        return 0
+
+    # ============================================================
+    # COLETA ÚNICA
+    # ============================================================
+
+    try:
+
+        coletar_uma_vez()
+
+    except Exception as erro:
+
+        print(
+            "\n[ERRO] A coleta não foi concluída:"
+        )
+
+        print(erro)
+
+        return 1
+
+    return 0
+
+
+# ================================================================
 # INICIALIZAÇÃO
 # ================================================================
 
 if __name__ == "__main__":
 
-    iniciar_monitoramento() 
+    sys.exit(
+        main(sys.argv[1:])
+    )
