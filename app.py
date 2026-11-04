@@ -3,6 +3,7 @@ import json
 
 from config import (
     INTERVALO_ATUALIZACAO_DASHBOARD,
+    MINUTOS_TOLERANCIA_DASHBOARD,
     SERVIDOR_HOST,
     SERVIDOR_PORTA,
     SERVIDOR_DEBUG
@@ -538,7 +539,9 @@ def dashboard():
 
         analise=analise,
 
-        intervalo_atualizacao=INTERVALO_ATUALIZACAO_DASHBOARD
+        intervalo_atualizacao=INTERVALO_ATUALIZACAO_DASHBOARD,
+
+        minutos_tolerancia=MINUTOS_TOLERANCIA_DASHBOARD
     )
 
 

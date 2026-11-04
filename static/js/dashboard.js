@@ -645,7 +645,7 @@ function atualizarStatusSistema() {
 
     if (
         diferencaMinutos >= 0 &&
-        diferencaMinutos <= 15
+        diferencaMinutos <= configuracao.minutos_tolerancia
     ) {
 
         texto.textContent =

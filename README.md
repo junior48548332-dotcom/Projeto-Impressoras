@@ -89,6 +89,7 @@ Projeto-Impressoras/
 │   ├── test_classificacao.py  # Testes da classificação dos suprimentos
 │   ├── test_consumo.py     # Testes do cálculo de consumo
 │   ├── test_consolidacao.py   # Testes da consolidação do dia da coleta
+│   ├── test_producao.py    # Testes das configurações de produção
 │   ├── test_contraste.py   # Testes de contraste das cores (WCAG)
 │   ├── test_rotas.py       # Testes das rotas da API e do dashboard
 │   └── test_monitor.py     # Testes dos modos de execução do monitor
@@ -149,11 +150,24 @@ Acesse **http://127.0.0.1:5000** no navegador. Para encerrar qualquer um dos pro
 
 > Em Linux ou macOS, troque `venv\Scripts\python` por `venv/bin/python`.
 
+### Modo de depuração
+
+O modo de depuração do Flask vem **desligado**. Ele reinicia o servidor quando um arquivo é salvo e mostra a página de erro detalhada — que traz um console Python interativo. Em um sistema publicado, quem conseguisse provocar um erro na página executaria comandos no servidor, então o padrão seguro é desligado.
+
+Para ligar enquanto você desenvolve:
+
+```powershell
+$env:IMPRESSORAS_DEBUG = "1"
+venv\Scripts\python app.py
+```
+
+Para desligar, feche o terminal ou use `Remove-Item Env:IMPRESSORAS_DEBUG`. Em produção não é preciso fazer nada: basta não definir a variável.
+
 ---
 
 ## Testes
 
-O projeto tem **168 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
+O projeto tem **188 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
 
 ```powershell
 venv\Scripts\python -m pytest
@@ -162,16 +176,17 @@ venv\Scripts\python -m pytest
 Saída esperada:
 
 ```
-tests/test_banco.py ..................................  [ 20%]
-tests/test_classificacao.py ........................    [ 34%]
-tests/test_consolidacao.py ..........                   [ 40%]
-tests/test_consumo.py ....................              [ 52%]
-tests/test_contraste.py ..............................  [ 70%]
-tests/test_monitor.py ...............                   [ 79%]
-tests/test_projeto.py ....                              [ 81%]
+tests/test_banco.py ..................................  [ 18%]
+tests/test_classificacao.py ........................    [ 30%]
+tests/test_consolidacao.py ..........                   [ 36%]
+tests/test_consumo.py ....................              [ 46%]
+tests/test_contraste.py ..............................  [ 62%]
+tests/test_monitor.py ...............                   [ 70%]
+tests/test_producao.py ....................             [ 81%]
+tests/test_projeto.py ....                              [ 83%]
 tests/test_rotas.py ...............................     [100%]
 
-============================= 168 passed in 1.92s =============================
+============================= 188 passed in 1.77s =============================
 ```
 
 ### O que é testado
@@ -186,6 +201,7 @@ tests/test_rotas.py ...............................     [100%]
 | `tests/test_contraste.py` | 30 | O contraste de cada combinação de cores do dashboard, segundo a WCAG 2.1 AA |
 | `tests/test_monitor.py` | 15 | Os dois modos de execução do monitor, a consolidação junto da coleta e os códigos de saída |
 | `tests/test_consolidacao.py` | 10 | A consolidação do dia da coleta, sem reprocessar os dias anteriores |
+| `tests/test_producao.py` | 20 | O debug desligado por padrão, o `app.py` importável sem subir servidor e a tolerância do aviso de sistema desatualizado |
 
 ### Comandos úteis
 
@@ -369,7 +385,7 @@ Dados consolidados do histórico, usados na aba Análise.
 | Script web (JavaScript) | Concluído | `static/js/dashboard.js` |
 | Controle de versão | Concluído | Git + GitHub |
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
-| Testes | Concluído | 168 testes automatizados com pytest em `tests/` |
+| Testes | Concluído | 188 testes automatizados com pytest em `tests/` |
 | Uso de API | Concluído | Rotas `/api/impressoras` e `/api/analise` (`app.py`) |
 | Acessibilidade | Concluído | Lighthouse 100/100 (`docs/acessibilidade/`) |
 | Nuvem | Pendente | Etapa 6 |
@@ -437,7 +453,7 @@ Dados consolidados do histórico, usados na aba Análise.
 
 - [x] Alterar o `monitor.py` para executar uma coleta e terminar (manter o modo contínuo como opção para uso local)
 - [x] Executar o consolidador automaticamente após cada coleta
-- [ ] Ajustar configurações para produção (desligar `debug`)
+- [x] Ajustar configurações para produção (desligar `debug`)
 - [ ] Publicar no PythonAnywhere (mantém os arquivos, então o SQLite funciona, e oferece tarefas agendadas)
 - [ ] Agendar a coleta no servidor
 - [ ] Adicionar o link do sistema publicado neste README
