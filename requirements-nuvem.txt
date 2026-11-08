@@ -1,0 +1,17 @@
+# Bibliotecas necessárias para RODAR o sistema no servidor.
+#
+# O servidor só precisa do Flask. O pandas e o openpyxl são
+# usados apenas pelo importar_planilha.py, que lê a planilha
+# Excel — e isso é feito na máquina local, antes de enviar o
+# banco pronto para o servidor.
+#
+# Deixar o pandas fora economiza mais de 150 MB no disco do
+# servidor, que no plano gratuito é de 512 MB.
+#
+# Para instalar no servidor:
+#     pip install -r requirements-nuvem.txt
+#
+# Para o ambiente completo de desenvolvimento, use o
+# requirements.txt.
+
+flask>=3.1
