@@ -14,6 +14,26 @@ Os arquivos `lighthouse.report.html` (relatório completo, abra no navegador) e 
 
 ---
 
+## Antes e depois
+
+O resultado de antes é o da primeira execução do Lighthouse, feita quando os ajustes de acessibilidade da Etapa 5 já estavam implementados — mas antes de a ferramenta ser usada.
+
+| | Antes | Depois |
+|---|---|---|
+| **Nota do Lighthouse** | 96 / 100 | **100 / 100** |
+| Auditorias automáticas reprovadas | 2 | **0** |
+| Contraste do modelo no card normal | 3,84:1 | **4,79:1** |
+| Contraste do modelo no card atenção | 3,94:1 | **4,93:1** |
+| Contraste do modelo no card crítico | 4,58:1 | **5,72:1** |
+| Contraste do modelo no card offline | 3,78:1 | **4,76:1** |
+| Contraste do rodapé | 4,46:1 | **6,98:1** |
+| Nome acessível dos contadores e cards | Substituía o texto visível | **Contém o texto visível** |
+| Combinações de cores verificadas automaticamente | 0 | **26**, em 30 testes |
+
+O que a ferramenta encontrou que a conferência manual não tinha encontrado: **transparência**. Os dois problemas de contraste vinham de `opacity: 0.75`, que mistura a cor do texto com o fundo — o valor declarado no CSS passava no cálculo, mas a cor que chega à tela, não.
+
+---
+
 ## Como reproduzir
 
 Com o servidor rodando (`venv\Scripts\python app.py`), em outro terminal:
@@ -91,7 +111,7 @@ Detectado na segunda execução: `#6b7280` sobre o fundo cinza da página dava 4
 | Gerenciamento de foco | Ao abrir a janela o foco entra nela; ao fechar volta ao card de origem |
 | Foco preso na janela | `Tab` circula apenas entre os elementos da janela aberta |
 | Situação sem depender de cor | Ícone e texto em cada card: ✓ Normal, ⚠ Atenção, ✕ Crítico, ⊘ Offline |
-| Contraste | 28 combinações verificadas, todas acima do mínimo |
+| Contraste | 26 combinações verificadas, todas acima do mínimo |
 | Emojis ocultos de leitores | `aria-hidden` nos ícones decorativos |
 | Tabela com cabeçalhos ligados | `scope="col"` na tabela do top 10 |
 

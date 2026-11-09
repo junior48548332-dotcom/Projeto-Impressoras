@@ -3,7 +3,7 @@ import time
 
 from datetime import datetime
 
-from config import INTERVALO_COLETA
+from config import FUSO_HORARIO, INTERVALO_COLETA
 
 from banco import (
     conectar,
@@ -153,7 +153,7 @@ def executar_verificacao():
     )
 
     print(
-        datetime.now().strftime(
+        datetime.now(FUSO_HORARIO).strftime(
             "%d/%m/%Y %H:%M:%S"
         )
     )

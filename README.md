@@ -90,6 +90,7 @@ Projeto-Impressoras/
 │   ├── test_consumo.py     # Testes do cálculo de consumo
 │   ├── test_consolidacao.py   # Testes da consolidação do dia da coleta
 │   ├── test_producao.py    # Testes das configurações de produção
+│   ├── test_fuso.py        # Testes do fuso horário das medições
 │   ├── test_contraste.py   # Testes de contraste das cores (WCAG)
 │   ├── test_rotas.py       # Testes das rotas da API e do dashboard
 │   └── test_monitor.py     # Testes dos modos de execução do monitor
@@ -163,11 +164,23 @@ venv\Scripts\python app.py
 
 Para desligar, feche o terminal ou use `Remove-Item Env:IMPRESSORAS_DEBUG`. Em produção não é preciso fazer nada: basta não definir a variável.
 
+### Fuso horário
+
+O horário de cada medição é gravado no **horário de Brasília** (UTC−3), definido em `config.py`:
+
+```python
+FUSO_HORARIO = timezone(timedelta(hours=-3), "Horário de Brasília")
+```
+
+Ele é declarado em vez de herdado do computador porque o servidor da nuvem roda em **UTC**. Sem isso, duas coisas quebram quando o sistema é publicado: o painel mostra a medição 3 horas no futuro e avisa "sistema desatualizado" o tempo todo; e, pior, a consolidação passa a virar o dia às 21h — uma coleta feita depois disso entra no dia seguinte e erra o relatório sem dar nenhum sinal na tela.
+
+É um deslocamento fixo porque o Brasil não tem horário de verão desde 2019. Se voltar a ter, é essa linha que muda.
+
 ---
 
 ## Testes
 
-O projeto tem **188 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
+O projeto tem **196 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
 
 ```powershell
 venv\Scripts\python -m pytest
@@ -176,17 +189,18 @@ venv\Scripts\python -m pytest
 Saída esperada:
 
 ```
-tests/test_banco.py ..................................  [ 18%]
-tests/test_classificacao.py ........................    [ 30%]
-tests/test_consolidacao.py ..........                   [ 36%]
-tests/test_consumo.py ....................              [ 46%]
-tests/test_contraste.py ..............................  [ 62%]
-tests/test_monitor.py ...............                   [ 70%]
-tests/test_producao.py ....................             [ 81%]
-tests/test_projeto.py ....                              [ 83%]
+tests/test_banco.py ..................................  [ 17%]
+tests/test_classificacao.py ........................    [ 29%]
+tests/test_consolidacao.py ..........                   [ 34%]
+tests/test_consumo.py ....................              [ 44%]
+tests/test_contraste.py ..............................  [ 60%]
+tests/test_fuso.py ........                             [ 64%]
+tests/test_monitor.py ...............                   [ 71%]
+tests/test_producao.py ....................             [ 82%]
+tests/test_projeto.py ....                              [ 84%]
 tests/test_rotas.py ...............................     [100%]
 
-============================= 188 passed in 1.77s =============================
+============================= 196 passed in 2.02s =============================
 ```
 
 ### O que é testado
@@ -202,6 +216,7 @@ tests/test_rotas.py ...............................     [100%]
 | `tests/test_monitor.py` | 15 | Os dois modos de execução do monitor, a consolidação junto da coleta e os códigos de saída |
 | `tests/test_consolidacao.py` | 10 | A consolidação do dia da coleta, sem reprocessar os dias anteriores |
 | `tests/test_producao.py` | 20 | O debug desligado por padrão, o `app.py` importável sem subir servidor e a tolerância do aviso de sistema desatualizado |
+| `tests/test_fuso.py` | 8 | A medição gravada no horário de Brasília mesmo com o servidor em UTC, e o dia da consolidação seguindo esse fuso |
 
 ### Comandos úteis
 
@@ -385,7 +400,7 @@ Dados consolidados do histórico, usados na aba Análise.
 | Script web (JavaScript) | Concluído | `static/js/dashboard.js` |
 | Controle de versão | Concluído | Git + GitHub |
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
-| Testes | Concluído | 188 testes automatizados com pytest em `tests/` |
+| Testes | Concluído | 196 testes automatizados com pytest em `tests/` |
 | Uso de API | Concluído | Rotas `/api/impressoras` e `/api/analise` (`app.py`) |
 | Acessibilidade | Concluído | Lighthouse 100/100 (`docs/acessibilidade/`) |
 | Nuvem | Pendente | Etapa 6 |

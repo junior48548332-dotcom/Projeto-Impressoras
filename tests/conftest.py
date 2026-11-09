@@ -127,7 +127,10 @@ class RelogioFixo:
     def __init__(self, texto):
         self.texto = texto
 
-    def now(self):
+    def now(self, fuso=None):
+        # O banco chama datetime.now(FUSO_HORARIO). O fuso é
+        # recebido e ignorado: o teste já escolheu a hora exata
+        # que quer ver gravada.
         return datetime.strptime(
             self.texto,
             "%Y-%m-%d %H:%M:%S"

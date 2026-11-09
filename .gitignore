@@ -29,3 +29,20 @@ estado_simulacao.json
 
 # Cache do pytest
 .pytest_cache/
+
+# ================================================================
+# DOCUMENTACAO DO PROJETO INTEGRADOR
+# ================================================================
+#
+# Fica fora do repositorio de propriedade: sao os documentos,
+# diagramas e PDFs do PI, nao o sistema em si.
+#
+# Os PDFs de entrega/ sao gerados a partir de docs/ e diagramas/
+# pelo comando:
+#
+#     python ferramentas/gerar_pdfs.py . entrega
+
+docs/
+diagramas/
+entrega/
+ferramentas/

@@ -1,5 +1,7 @@
 import os
 
+from datetime import timedelta, timezone
+
 from pathlib import Path
 
 
@@ -44,6 +46,40 @@ BANCO_DADOS = PASTA_PROJETO / "impressoras.db"
 
 # Estado salvo do simulador (níveis de toner e status de rede)
 ARQUIVO_ESTADO_SIMULACAO = PASTA_PROJETO / "estado_simulacao.json"
+
+
+# ================================================================
+# FUSO HORÁRIO
+# ================================================================
+#
+# O horário de cada medição é gravado no banco. Sem dizer de que
+# fuso ele é, o sistema usaria o relógio do computador em que
+# está rodando — e o servidor da nuvem roda em UTC, 3 horas à
+# frente de Brasília.
+#
+# Isso estragaria duas coisas:
+#
+#   1. O painel mostraria a medição no futuro e avisaria
+#      "sistema desatualizado" o tempo todo.
+#
+#   2. Pior: a consolidação agrupa por dia recortando o texto da
+#      data. Com o servidor em UTC, o dia viraria às 21h de
+#      Brasília, e uma coleta feita depois disso entraria no dia
+#      seguinte, errando o relatório sem dar nenhum sinal.
+#
+# Por isso o fuso é declarado aqui, e não herdado do servidor.
+#
+# É um deslocamento fixo porque o Brasil não tem horário de
+# verão desde 2019. Se voltar a ter, é esta linha que muda.
+#
+# Não é usado o zoneinfo da biblioteca padrão porque, no
+# Windows, ele depende do pacote tzdata, que não vem junto com o
+# Python — e o projeto é desenvolvido no Windows.
+
+FUSO_HORARIO = timezone(
+    timedelta(hours=-3),
+    "Horário de Brasília"
+)
 
 
 # ================================================================
