@@ -3,7 +3,7 @@ import json
 
 from datetime import datetime
 
-from config import BANCO_DADOS, FUSO_HORARIO
+from config import BANCO_DADOS, FORMATO_DATA_HORA, FUSO_HORARIO
 
 
 # ================================================================
@@ -315,7 +315,7 @@ def salvar_medicao(conexao, impressora):
     # O fuso vem do config.py, não do relógio do servidor: na
     # nuvem ele roda em UTC e a medição ficaria 3 horas à frente.
     data_hora = datetime.now(FUSO_HORARIO).strftime(
-        "%Y-%m-%d %H:%M:%S"
+        FORMATO_DATA_HORA
     )
 
     cursor.execute("""

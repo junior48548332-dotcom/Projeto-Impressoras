@@ -24,6 +24,7 @@ def test_modulos_do_projeto_carregam():
     import monitor
     import consolidador
     import importar_planilha
+    import agendador
 
     from coleta import simulador
 
@@ -34,6 +35,7 @@ def test_modulos_do_projeto_carregam():
     assert callable(monitor.classificar_nivel)
     assert callable(consolidador.consolidar_dia)
     assert callable(importar_planilha.importar)
+    assert callable(agendador.coletar_se_estiver_na_hora)
 
 
 # ================================================================

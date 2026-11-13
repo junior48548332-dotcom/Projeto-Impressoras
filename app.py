@@ -9,6 +9,8 @@ from config import (
     SERVIDOR_DEBUG
 )
 
+from agendador import coletar_se_estiver_na_hora
+
 from banco import (
     conectar,
     buscar_impressoras,
@@ -496,6 +498,12 @@ def obter_ultima_atualizacao():
 @app.route("/")
 def dashboard():
 
+    # Se já passou o intervalo desde a última medição, dispara uma
+    # coleta em segundo plano. Devolve na hora: a página não espera
+    # pela coleta, e os dados novos aparecem na atualização
+    # seguinte. Com a coleta automática desligada, não faz nada.
+    coletar_se_estiver_na_hora()
+
     impressoras = carregar_impressoras()
 
 
@@ -573,6 +581,10 @@ def api_impressoras():
         "impressoras": [ ... ]
     }
     """
+
+    # É esta rota que o painel consulta a cada 50 segundos, então
+    # é por aqui que a coleta automática costuma ser disparada.
+    coletar_se_estiver_na_hora()
 
     impressoras = carregar_impressoras()
 

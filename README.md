@@ -4,6 +4,8 @@ Sistema web para **monitorar as impressoras de uma empresa**: mostra quais estã
 
 Desenvolvido como Projeto Integrador (PI).
 
+**O sistema está no ar em [printcontrol.pythonanywhere.com](https://printcontrol.pythonanywhere.com)** — dá para ver funcionando sem instalar nada.
+
 > **Aviso:** nesta versão os dados das impressoras são **simulados** pelo arquivo `coleta/simulador.py`. O cadastro (local, modelo, IP) vem de uma planilha real de exemplo, mas os níveis de toner e o status de rede são gerados pelo sistema. A coleta real via rede é uma evolução futura.
 
 ---
@@ -38,10 +40,11 @@ flowchart LR
     D --> A
     A --> W[dashboard.html<br/>navegador]
     W -->|fetch a cada 50s| A
+    A -.->|se passou do intervalo| M
 ```
 
 1. **Cadastro:** a planilha `impressoras.xlsx` lista as impressoras ativas (local, modelo, tipo, papel, nº de série e IP). O `importar_planilha.py` copia esse cadastro para a tabela `impressoras` do banco, que é de onde o resto do sistema lê.
-2. **Coleta:** o `monitor.py` lê o cadastro no banco, pede ao simulador os dados de cada impressora e grava uma medição. Sem argumentos ele faz uma coleta e encerra, que é o modo usado pela tarefa agendada do servidor; com `--continuo` ele repete a coleta a cada 10 minutos, para uso local.
+2. **Coleta:** o `monitor.py` lê o cadastro no banco, pede ao simulador os dados de cada impressora e grava uma medição. Sem argumentos ele faz uma coleta e encerra; com `--continuo` ele repete a coleta a cada 10 minutos, para uso local. No servidor publicado, quem chama a coleta única é o próprio `app.py`, pelo `agendador.py`, quando percebe que a última medição passou do intervalo.
 3. **Consolidação:** o `consolidador.py` agrupa as medições por dia e por impressora, calculando consumo médio, tempo online/offline e alertas. O `monitor.py` chama a consolidação do dia ao fim de cada coleta, então a aba Análise não depende de ninguém rodar nada na mão. Executado direto, o `consolidador.py` reprocessa o histórico inteiro.
 4. **Visualização:** o `app.py` junta tudo e entrega o dashboard, que tem duas abas: **Monitoramento** (situação atual) e **Análise** (histórico consolidado).
 
@@ -67,6 +70,7 @@ Projeto-Impressoras/
 ├── planilha.py             # Leitura do cadastro de impressoras no Excel
 ├── importar_planilha.py    # Copia o cadastro da planilha para o banco
 ├── monitor.py              # Coleta os dados e consolida o dia
+├── agendador.py            # Decide quando o servidor coleta sozinho
 ├── coleta/
 │   ├── __init__.py
 │   ├── simulador.py        # Gera níveis de toner e status de rede
@@ -91,6 +95,7 @@ Projeto-Impressoras/
 │   ├── test_consolidacao.py   # Testes da consolidação do dia da coleta
 │   ├── test_producao.py    # Testes das configurações de produção
 │   ├── test_fuso.py        # Testes do fuso horário das medições
+│   ├── test_agendador.py   # Testes da coleta automática do servidor
 │   ├── test_contraste.py   # Testes de contraste das cores (WCAG)
 │   ├── test_rotas.py       # Testes das rotas da API e do dashboard
 │   └── test_monitor.py     # Testes dos modos de execução do monitor
@@ -103,6 +108,8 @@ Arquivos gerados ao rodar (não vão para o Git): `impressoras.db`, `estado_simu
 ---
 
 ## Como executar
+
+Os passos abaixo são para rodar o sistema **na sua máquina**. Para apenas vê-lo funcionando, use o [endereço publicado](https://printcontrol.pythonanywhere.com).
 
 Pré-requisito: [Python 3](https://www.python.org/downloads/) instalado.
 
@@ -176,11 +183,39 @@ Ele é declarado em vez de herdado do computador porque o servidor da nuvem roda
 
 É um deslocamento fixo porque o Brasil não tem horário de verão desde 2019. Se voltar a ter, é essa linha que muda.
 
+### Coleta automática pelo servidor
+
+No servidor, não há ninguém para digitar `python monitor.py` de tempos em tempos — e o plano gratuito do PythonAnywhere não oferece tarefas agendadas para contas novas. Então o próprio servidor web se encarrega disso.
+
+A cada requisição, o `agendador.py` olha a data da última medição. Se ela passou do `INTERVALO_COLETA`, dispara uma coleta **em segundo plano** e responde na hora: a página não espera, e os dados novos aparecem na atualização seguinte.
+
+Três coisas importam nesse desenho:
+
+- **Quem decide é o servidor, não o navegador.** O painel só busca dados a cada 50 segundos; ele não pede coleta e nem sabe que ela existe. Cinco pessoas com o painel aberto continuam gerando uma coleta a cada 10 minutos.
+- **Uma de cada vez.** A verificação e a marcação acontecem dentro de uma tranca, então duas requisições simultâneas não disparam duas coletas.
+- **Uma falha não derruba o painel.** Se a coleta quebrar, o erro vai para o log do servidor e a próxima tentativa só acontece depois de 60 segundos.
+
+O padrão é **desligado**, para que o servidor web não colete junto na máquina de desenvolvimento nem durante os testes. Para ligar:
+
+```powershell
+$env:IMPRESSORAS_COLETA_WEB = "1"
+venv\Scripts\python app.py
+```
+
+No servidor, o jeito mais simples é definir a variável no próprio arquivo WSGI:
+
+```python
+import os
+os.environ["IMPRESSORAS_COLETA_WEB"] = "1"
+```
+
+**Limitação, declarada de propósito:** só coleta enquanto alguém estiver com o painel aberto. Sem ninguém olhando não há requisição, e o histórico fica com buracos. Para cobrir esses períodos, um serviço externo gratuito pode abrir o endereço do sistema de tempos em tempos.
+
 ---
 
 ## Testes
 
-O projeto tem **196 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
+O projeto tem **215 testes automatizados**, escritos com [pytest](https://docs.pytest.org/). Para rodar todos:
 
 ```powershell
 venv\Scripts\python -m pytest
@@ -189,18 +224,19 @@ venv\Scripts\python -m pytest
 Saída esperada:
 
 ```
-tests/test_banco.py ..................................  [ 17%]
-tests/test_classificacao.py ........................    [ 29%]
-tests/test_consolidacao.py ..........                   [ 34%]
-tests/test_consumo.py ....................              [ 44%]
-tests/test_contraste.py ..............................  [ 60%]
-tests/test_fuso.py ........                             [ 64%]
-tests/test_monitor.py ...............                   [ 71%]
-tests/test_producao.py ....................             [ 82%]
-tests/test_projeto.py ....                              [ 84%]
+tests/test_agendador.py ...................             [  8%]
+tests/test_banco.py ..................................  [ 24%]
+tests/test_classificacao.py ........................    [ 35%]
+tests/test_consolidacao.py ..........                   [ 40%]
+tests/test_consumo.py ....................              [ 49%]
+tests/test_contraste.py ..............................  [ 63%]
+tests/test_fuso.py ........                             [ 67%]
+tests/test_monitor.py ...............                   [ 74%]
+tests/test_producao.py ....................             [ 83%]
+tests/test_projeto.py ....                              [ 85%]
 tests/test_rotas.py ...............................     [100%]
 
-============================= 196 passed in 2.02s =============================
+============================= 215 passed in 2.34s =============================
 ```
 
 ### O que é testado
@@ -217,6 +253,7 @@ tests/test_rotas.py ...............................     [100%]
 | `tests/test_consolidacao.py` | 10 | A consolidação do dia da coleta, sem reprocessar os dias anteriores |
 | `tests/test_producao.py` | 20 | O debug desligado por padrão, o `app.py` importável sem subir servidor e a tolerância do aviso de sistema desatualizado |
 | `tests/test_fuso.py` | 8 | A medição gravada no horário de Brasília mesmo com o servidor em UTC, e o dia da consolidação seguindo esse fuso |
+| `tests/test_agendador.py` | 19 | A coleta automática do servidor: quando dispara, quando não dispara, e as proteções contra coleta repetida |
 
 ### Comandos úteis
 
@@ -400,10 +437,10 @@ Dados consolidados do histórico, usados na aba Análise.
 | Script web (JavaScript) | Concluído | `static/js/dashboard.js` |
 | Controle de versão | Concluído | Git + GitHub |
 | Análise de dados (opcional) | Concluído | pandas + `consolidador.py` + aba Análise |
-| Testes | Concluído | 196 testes automatizados com pytest em `tests/` |
+| Testes | Concluído | 215 testes automatizados com pytest em `tests/` |
 | Uso de API | Concluído | Rotas `/api/impressoras` e `/api/analise` (`app.py`) |
 | Acessibilidade | Concluído | Lighthouse 100/100 (`docs/acessibilidade/`) |
-| Nuvem | Pendente | Etapa 6 |
+| Nuvem | Concluído | [printcontrol.pythonanywhere.com](https://printcontrol.pythonanywhere.com) no PythonAnywhere, com coleta automática (`agendador.py`) |
 
 ---
 
@@ -469,9 +506,9 @@ Dados consolidados do histórico, usados na aba Análise.
 - [x] Alterar o `monitor.py` para executar uma coleta e terminar (manter o modo contínuo como opção para uso local)
 - [x] Executar o consolidador automaticamente após cada coleta
 - [x] Ajustar configurações para produção (desligar `debug`)
-- [ ] Publicar no PythonAnywhere (mantém os arquivos, então o SQLite funciona, e oferece tarefas agendadas)
-- [ ] Agendar a coleta no servidor
-- [ ] Adicionar o link do sistema publicado neste README
+- [x] Publicar no PythonAnywhere (mantém os arquivos, então o SQLite funciona)
+- [x] Agendar a coleta no servidor (o próprio servidor coleta quando percebe que passou do intervalo)
+- [x] Adicionar o link do sistema publicado neste README
 
 ### Etapa 7 — Entrega
 

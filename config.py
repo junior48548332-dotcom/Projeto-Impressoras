@@ -82,6 +82,13 @@ FUSO_HORARIO = timezone(
 )
 
 
+# Formato em que a data e a hora são gravadas no banco.
+#
+# Ordena corretamente em ordem alfabética, e o dia é um recorte do
+# texto: substr(data_hora, 1, 10). A consolidação depende disso.
+FORMATO_DATA_HORA = "%Y-%m-%d %H:%M:%S"
+
+
 # ================================================================
 # INTERVALOS (em segundos)
 # ================================================================
@@ -131,6 +138,7 @@ SERVIDOR_PORTA = 5000
 
 VARIAVEL_DEBUG = "IMPRESSORAS_DEBUG"
 
+# Usado também pela coleta automática, mais abaixo
 VALORES_LIGADO = ("1", "true", "sim", "on")
 
 
@@ -143,3 +151,53 @@ def debug_ligado():
 
 
 SERVIDOR_DEBUG = debug_ligado()
+
+
+# ================================================================
+# COLETA AUTOMÁTICA PELO SERVIDOR
+# ================================================================
+#
+# Com isto ligado, o próprio servidor web dispara uma coleta
+# quando percebe que a última medição passou do INTERVALO_COLETA.
+# Quem verifica é o servidor, a cada requisição; o navegador não
+# pede coleta nenhuma.
+#
+# Existe porque o plano gratuito do PythonAnywhere não oferece
+# tarefas agendadas para contas novas. A lógica fica no
+# agendador.py.
+#
+# O padrão é DESLIGADO, por dois motivos:
+#
+#   1. Na máquina de desenvolvimento, quem coleta é o
+#      monitor.py --continuo. O servidor web coletar junto seria
+#      surpresa.
+#
+#   2. Os testes sobem o aplicativo com um banco temporário. Se a
+#      coleta automática viesse ligada, eles gravariam medições
+#      que não pediram.
+#
+# Para ligar no servidor, a forma mais simples é definir a
+# variável no próprio arquivo WSGI:
+#
+#     import os
+#     os.environ["IMPRESSORAS_COLETA_WEB"] = "1"
+
+VARIAVEL_COLETA_WEB = "IMPRESSORAS_COLETA_WEB"
+
+
+def coleta_web_ligada():
+    """Lê a variável de ambiente que liga a coleta automática."""
+
+    valor = os.environ.get(VARIAVEL_COLETA_WEB, "")
+
+    return valor.strip().lower() in VALORES_LIGADO
+
+
+COLETA_WEB = coleta_web_ligada()
+
+
+# Tempo mínimo entre duas tentativas de coleta automática.
+#
+# Sem isso, uma coleta que falha seria tentada de novo a cada
+# atualização do painel — a cada 50 segundos.
+SEGUNDOS_ENTRE_TENTATIVAS = 60
